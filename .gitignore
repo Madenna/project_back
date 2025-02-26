@@ -1,0 +1,13 @@
+# Ignore Firebase Credentials
+balasteps-auth-firebase-adminsdk-fbsvc-b6c103a29c.json
+
+# Ignore Virtual Environment
+venv/
+
+# Ignore Database Files
+db.sqlite3
+
+# Ignore Compiled Files
+__pycache__/
+*.pyc
+
