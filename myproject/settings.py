@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Django REST Framework
     'corsheaders',  # Allow frontend access
     'userauth',  # Your authentication app
+    'drf_yasg', 
 ]
 
 MIDDLEWARE = [
