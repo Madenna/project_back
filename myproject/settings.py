@@ -77,10 +77,10 @@ AUTH_PASSWORD_VALIDATORS = [
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Twilio Credentials (Commented Out for Security)
-# TWILIO_ACCOUNT_SID = "AC35dd89a0d3dbfa6b2cae5753a42d1c8e"
-# TWILIO_AUTH_TOKEN = "d0dfa05510e4c7160b12ea972066b7d0"
-# TWILIO_PHONE_NUMBER = "+77786052623"
+
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 # CORS (Allow frontend to connect)
 CORS_ALLOWED_ORIGINS = [
