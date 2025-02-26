@@ -56,3 +56,4 @@ urllib3==2.3.0
 whitenoise==6.9.0
 yarl==1.18.3
 drf-yasg
+drf-yasg
