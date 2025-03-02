@@ -5,14 +5,14 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ProfileSerializer
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from django.contrib.auth import authenticate
-from .models import User, OTPVerification
+from .models import User, OTPVerification, Profile
 
 from .utils import send_otp_firebase
 
@@ -93,3 +93,10 @@ class VerifyOTPView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class ProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user.profile
