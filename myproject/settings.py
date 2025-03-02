@@ -2,6 +2,8 @@ import os
 import firebase_admin
 from firebase_admin import credentials
 from pathlib import Path
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module='urllib3')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',  # Django REST Framework
     'corsheaders',  # Allow frontend access
-    'userauth',  # Your authentication app
+    'userauth',  # authentication app
     'drf_yasg', 
 ]
 
@@ -77,6 +79,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
 
 LOGIN_URL = "/auth/login/"
 
