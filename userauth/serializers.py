@@ -23,6 +23,7 @@ class OTPVerificationSerializer(serializers.Serializer):
 class PasswordResetSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
+    id_token = serializers.CharField()
 
 # Phone Number Change Serializer
 class PhoneNumberChangeSerializer(serializers.Serializer):

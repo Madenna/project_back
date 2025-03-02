@@ -182,10 +182,29 @@ class PasswordResetView(APIView):
         # except User.DoesNotExist:
         #     return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         if serializer.is_valid():
-            user = User.objects.get(phone_number=serializer.validated_data["phone_number"])
-            user.set_password(serializer.validated_data["new_password"])
-            user.save()
-            return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+            phone_number = serializer.validated_data["phone_number"]
+            new_password = serializer.validated_data["new_password"]
+            id_token = serializer.validated_data.get("id_token")  # Firebase ID Token for OTP Verification
+
+            # Check if the user exists
+            try:
+                user = User.objects.get(phone_number=phone_number)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Verify OTP using Firebase
+            try:
+                decoded_token = auth.verify_id_token(id_token)
+                if decoded_token.get("phone_number") == phone_number:
+                    # Reset password if verification is successful
+                    user.set_password(new_password)
+                    user.save()
+                    return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyNewPhoneNumberView(APIView):
