@@ -7,7 +7,9 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from .serializers import UserSerializer
+from .serializers import (UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
+    PasswordResetSerializer, ProfileSerializer, PhoneNumberChangeSerializer,
+    VerifyNewPhoneNumberSerializer)
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -36,7 +38,8 @@ class RegisterView(APIView):
             return Response({"error": "A user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Continue with registration
-        serializer = UserSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data)
+
         if serializer.is_valid():
             user = serializer.save()
             user.is_active = False  # User must verify OTP first
@@ -55,8 +58,8 @@ class LoginView(APIView):
         phone_number = request.data.get("phone_number")
         password = request.data.get("password")
 
-        user = authenticate(username=phone_number, password=password)
-
+        user = authenticate(phone_number=phone_number, password=password)  #may be username=phone_number (???)
+ 
         if user is not None:
             if user.is_active:  # Check if the user is active
                 refresh = RefreshToken.for_user(user)
@@ -114,15 +117,16 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         user = request.user
 
         if new_phone_number:
-            # Store the new phone number temporarily
-            user.temp_phone_number = new_phone_number
-            user.save()
-            # Send OTP to the new phone number using Firebase
-            otp_response = send_otp_firebase(new_phone_number)
-            return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
+            if user.phone_number != new_phone_number:
+                user.temp_phone_number = new_phone_number
+                user.save()
+                otp_response = send_otp_firebase(new_phone_number)
+                return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "New phone number is the same as the current one."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # If no new phone number, proceed to update other fields
         return super().update(request, *args, **kwargs)
+
     
 class PasswordResetView(APIView):
     def post(self, request):
@@ -148,11 +152,33 @@ class VerifyNewPhoneNumberView(APIView):
             decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
             user = request.user
 
-            if decoded_token:
-                user.phone_number = new_phone_number  # Update phone number if verified
+            if decoded_token.get("phone_number") == new_phone_number:
+                user.phone_number = new_phone_number
+                user.temp_phone_number = None  # Clear temporary field
                 user.save()
                 return Response({"message": "Phone number updated successfully."}, status=status.HTTP_200_OK)
-            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-
+            else:
+                return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
+            
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+class RequestPhoneNumberChangeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PhoneNumberChangeSerializer(data=request.data)
+        if serializer.is_valid():
+            new_phone_number = serializer.validated_data["new_phone_number"]
+            user = request.user
+
+            if user.phone_number != new_phone_number:
+                user.temp_phone_number = new_phone_number
+                user.save()
+                otp_response = send_otp_firebase(new_phone_number)
+                return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
+            else:
+                return Response({"message": "New phone number is the same as the current one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

@@ -2,6 +2,37 @@ from rest_framework import serializers
 from .models import User, Profile
 from .utils import send_otp_firebase
 
+# Login Serializer
+class LoginSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+# Register Serializer
+class RegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['phone_number', 'full_name', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+# OTP Verification Serializer
+class OTPVerificationSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    id_token = serializers.CharField()
+
+# Password Reset Serializer
+class PasswordResetSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+    
+# Phone Number Change Serializer
+class PhoneNumberChangeSerializer(serializers.Serializer):
+    new_phone_number = serializers.CharField()
+
+# Verify New Phone Number Serializer
+class VerifyNewPhoneNumberSerializer(serializers.Serializer):
+    new_phone_number = serializers.CharField()
+    id_token = serializers.CharField()
+
 class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='user.full_name', required=False)
     phone_number = serializers.CharField(source='user.phone_number', required=False)
