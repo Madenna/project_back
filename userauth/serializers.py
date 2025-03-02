@@ -1,13 +1,44 @@
 from rest_framework import serializers
 from .models import User, Profile
+from .utils import send_otp_firebase
 
 class ProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='user.full_name', read_only=True)  # Access `full_name` from `User` model
-    phone_number = serializers.CharField(source='user.phone_number', read_only=True)  # Access `phone_number` from `User` model
+    full_name = serializers.CharField(source='user.full_name', required=False)
+    phone_number = serializers.CharField(source='user.phone_number', required=False)
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    additional_info = serializers.CharField(required=False, allow_null=True)
+    city = serializers.CharField(required=False, allow_null=True)
+
 
     class Meta:
         model = Profile
-        fields = ['profile_photo', 'full_name', 'phone_number', 'city', 'additional_info']  
+        fields = ['full_name', 'phone_number', 'profile_photo', 'additional_info', 'city']
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        
+        # Check if phone number is being changed
+        new_phone_number = user_data.get('phone_number')
+        if new_phone_number and new_phone_number != instance.user.phone_number:
+            # Send OTP for new phone number
+            otp_response = send_otp_firebase(new_phone_number)
+            # Temporarily store new phone number in profile model (or create a separate field)
+            instance.user.temp_phone_number = new_phone_number  # This field should exist in the User model
+            instance.user.save()
+            return {"message": "OTP sent to new phone number. Please verify."}
+
+        # Update User model fields
+        user = instance.user
+        user.full_name = user_data.get('full_name', user.full_name)
+        user.save()
+
+        # Update Profile model fields
+        instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
+        instance.additional_info = validated_data.get('additional_info', instance.additional_info)
+        instance.city = validated_data.get('city', instance.city)
+        instance.save()
+
+        return instance
 
 class UserSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()

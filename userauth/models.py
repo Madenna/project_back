@@ -30,6 +30,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=15, unique=True)
+    temp_phone_number = models.CharField(max_length=15, blank=True, null=True) 
     password = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
