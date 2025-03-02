@@ -1,12 +1,13 @@
 from firebase_admin import auth
 from django.shortcuts import render
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
-from .serializers import UserSerializer, ProfileSerializer
+from .serializers import UserSerializer
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -17,12 +18,13 @@ from .models import User, OTPVerification, Profile
 
 from .utils import send_otp_firebase
 
+User = get_user_model()
+
 class ProtectedView(APIView):
-    permission_classes = [IsAuthenticated]  # 🔐 Require authentication
+    permission_classes = [IsAuthenticated]  # Require authentication
 
     def get(self, request):
         return Response({"message": "You are authenticated!"})
-
 
 # Register User
 class RegisterView(APIView):
@@ -53,15 +55,20 @@ class LoginView(APIView):
         phone_number = request.data.get("phone_number")
         password = request.data.get("password")
 
-        user = authenticate(phone_number=phone_number, password=password)
+        user = authenticate(username=phone_number, password=password)
 
         if user is not None:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token)
-            })
+            if user.is_active:  # Check if the user is active
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token)
+                })
+            else:
+                return Response({"error": "User is not verified. Please verify your phone number."}, status=status.HTTP_401_UNAUTHORIZED)
+
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 # Logout 
 class LogoutView(APIView):
@@ -96,8 +103,22 @@ class VerifyOTPView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 class ProfileView(generics.RetrieveUpdateAPIView):
+    from .serializers import ProfileSerializer
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         return self.request.user.profile
+    
+class PasswordResetView(APIView):
+    def post(self, request):
+        phone_number = request.data.get("phone_number")
+        new_password = request.data.get("new_password")
+
+        try:
+            user = User.objects.get(phone_number=phone_number)
+            user.set_password(new_password)
+            user.save()
+            return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)

@@ -2,9 +2,12 @@ from rest_framework import serializers
 from .models import User, Profile
 
 class ProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='user.full_name', read_only=True)  # Access `full_name` from `User` model
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)  # Access `phone_number` from `User` model
+
     class Meta:
         model = Profile
-        fields = ['profile_photo', 'city', 'additional_info']  
+        fields = ['profile_photo', 'full_name', 'phone_number', 'city', 'additional_info']  
 
 class UserSerializer(serializers.ModelSerializer):
     profile = serializers.SerializerMethodField()
