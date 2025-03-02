@@ -191,6 +191,7 @@ class PasswordResetView(APIView):
 class VerifyNewPhoneNumberView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = VerifyNewPhoneNumberSerializer
+    @swagger_auto_schema(request_body=VerifyNewPhoneNumberSerializer)
     def post(self, request):
         serializer = VerifyNewPhoneNumberSerializer(data=request.data)
         # if serializer.is_valid():
@@ -216,20 +217,31 @@ class VerifyNewPhoneNumberView(APIView):
         if serializer.is_valid():
             new_phone_number = serializer.validated_data["new_phone_number"]
             id_token = serializer.validated_data["id_token"]
-            decoded_token = auth.verify_id_token(id_token)
-            user = request.user
-            if decoded_token.get("phone_number") == new_phone_number:
-                user.phone_number = new_phone_number
-                user.temp_phone_number = None
-                user.save()
-                return Response({"message": "Phone number updated successfully."}, status=status.HTTP_200_OK)
-            return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                decoded_token = auth.verify_id_token(id_token)
+                user = request.user
+
+                if decoded_token.get("phone_number") == new_phone_number:
+                    user.phone_number = new_phone_number
+                    user.temp_phone_number = None
+                    user.save()
+                    return Response({
+                        "message": "Phone number updated successfully."
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        "error": "Phone number does not match the verified token."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({
+                    "error": str(e)
+                }, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class RequestPhoneNumberChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RequestPhoneNumberChangeSerializer
-
+    @swagger_auto_schema(request_body=RequestPhoneNumberChangeSerializer)
     def post(self, request):
         serializer = RequestPhoneNumberChangeSerializer(data=request.data)
         if serializer.is_valid():
