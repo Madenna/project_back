@@ -53,6 +53,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['full_name', 'phone_number', 'profile_photo', 'additional_info', 'city']
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if not rep['profile_photo']:
+            rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+        return rep
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
