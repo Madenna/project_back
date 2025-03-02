@@ -84,6 +84,8 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_URL = "/auth/login/"
+LOGIN_REDIRECT_URL = '/swagger/'
+LOGOUT_REDIRECT_URL = '/swagger/'
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
