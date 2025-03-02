@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from .serializers import (UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
     PasswordResetSerializer, ProfileSerializer, PhoneNumberChangeSerializer,
-    VerifyNewPhoneNumberSerializer)
+    VerifyNewPhoneNumberSerializer, RequestPhoneNumberChangeSerializer)
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -30,6 +30,7 @@ class ProtectedView(APIView):
 
 # Register User
 class RegisterView(APIView):
+    serializer_class = RegisterSerializer
     def post(self, request):
         phone_number = request.data.get("phone_number")
         
@@ -54,24 +55,20 @@ class RegisterView(APIView):
     
 # Login and get JWT token
 class LoginView(APIView):
+    serializer_class = LoginSerializer
     def post(self, request):
-        phone_number = request.data.get("phone_number")
-        password = request.data.get("password")
-
-        user = authenticate(phone_number=phone_number, password=password)  #may be username=phone_number (???)
- 
-        if user is not None:
-            if user.is_active:  # Check if the user is active
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            phone_number = serializer.validated_data["phone_number"]
+            password = serializer.validated_data["password"]
+            user = authenticate(username=phone_number, password=password)
+            if user and user.is_active:
                 refresh = RefreshToken.for_user(user)
                 return Response({
                     "refresh": str(refresh),
                     "access": str(refresh.access_token)
                 })
-            else:
-                return Response({"error": "User is not verified. Please verify your phone number."}, status=status.HTTP_401_UNAUTHORIZED)
-
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
 
 # Logout 
 class LogoutView(APIView):
@@ -83,27 +80,24 @@ class LogoutView(APIView):
             token = RefreshToken(refresh_token)
             token.blacklist()  # Blacklist the refresh token
 
-            return Response({"message": "Logout successful"}, status=200)
+            return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": "Invalid token"}, status=400)
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyOTPView(APIView):
+    serializer_class = OTPVerificationSerializer
+
     def post(self, request):
-        phone_number = request.data.get("phone_number")
-        id_token = request.data.get("id_token")  # Frontend sends Firebase ID Token
-
-        try:
-            decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
+        serializer = OTPVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            phone_number = serializer.validated_data["phone_number"]
+            id_token = serializer.validated_data["id_token"]
+            auth.verify_id_token(id_token)
             user = User.objects.get(phone_number=phone_number)
-
-            if decoded_token:
-                user.is_active = True  # Activate account
-                user.save()
-                return Response({"message": "Phone number verified successfully"}, status=status.HTTP_200_OK)
-            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            user.is_active = True
+            user.save()
+            return Response({"message": "Phone number verified successfully"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class ProfileView(generics.RetrieveUpdateAPIView):
     from .serializers import ProfileSerializer
@@ -112,23 +106,57 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user.profile
+
     def update(self, request, *args, **kwargs):
-        new_phone_number = request.data.get("new_phone_number")
+        #new_phone_number = request.data.get("new_phone_number")
         user = request.user
+        serializer = self.get_serializer(data=request.data, partial=True)
 
-        if new_phone_number:
-            if user.phone_number != new_phone_number:
-                user.temp_phone_number = new_phone_number
-                user.save()
-                otp_response = send_otp_firebase(new_phone_number)
-                return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
-            else:
-                return Response({"message": "New phone number is the same as the current one."}, status=status.HTTP_400_BAD_REQUEST)
+        # if new_phone_number:
+        #     if user.phone_number != new_phone_number:
+        #         user.temp_phone_number = new_phone_number
+        #         user.save()
+        #         otp_response = send_otp_firebase(new_phone_number)
+        #         return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
+        #     else:
+        #         return Response({"message": "New phone number is the same as the current one."}, status=status.HTTP_400_BAD_REQUEST)
 
-        return super().update(request, *args, **kwargs)
+        # return super().update(request, *args, **kwargs)
+        if serializer.is_valid():
+            new_phone_number = serializer.validated_data.get("new_phone_number", None)
+
+            # Handle phone number change with OTP
+            if new_phone_number:
+                if user.phone_number != new_phone_number:
+                    user.temp_phone_number = new_phone_number
+                    user.save()
+                    otp_response = send_otp_firebase(new_phone_number)
+                    return Response({
+                        "message": "OTP sent to new phone number. Please verify.",
+                        "otp_response": otp_response
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        "message": "New phone number is the same as the current one."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save other profile details if no phone number change is requested
+            profile = self.get_object()
+            if isinstance(profile, Response):
+                # If get_object returned an error Response
+                return profile
+
+            serializer = self.get_serializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
 class PasswordResetView(APIView):
+    serializer_class = PasswordResetSerializer
     def post(self, request):
         phone_number = request.data.get("phone_number")
         new_password = request.data.get("new_password")
@@ -145,8 +173,12 @@ class VerifyNewPhoneNumberView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        new_phone_number = request.data.get("new_phone_number")
-        id_token = request.data.get("id_token")  # Firebase ID Token
+        serializer = VerifyNewPhoneNumberSerializer(data=request.data)
+        if serializer.is_valid():
+            new_phone_number = serializer.validated_data["new_phone_number"]
+            id_token = serializer.validated_data["id_token"]
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
@@ -165,9 +197,10 @@ class VerifyNewPhoneNumberView(APIView):
         
 class RequestPhoneNumberChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = RequestPhoneNumberChangeSerializer
 
     def post(self, request):
-        serializer = PhoneNumberChangeSerializer(data=request.data)
+        serializer = RequestPhoneNumberChangeSerializer(data=request.data)
         if serializer.is_valid():
             new_phone_number = serializer.validated_data["new_phone_number"]
             user = request.user
