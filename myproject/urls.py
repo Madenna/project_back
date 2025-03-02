@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.shortcuts import redirect
 
 # Configure Swagger schema
 schema_view = get_schema_view(
@@ -17,9 +18,10 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/', include('userauth.urls')),  # ✅ Include authentication URLs
+    path('', lambda request: redirect('/swagger/')), 
+    path('auth/', include('userauth.urls')),  
 
     # Swagger URLs
-    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('swagger/', include('drf_yasg.urls')),
+    path('redoc/', include('drf_yasg.urls')),
 ]
