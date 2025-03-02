@@ -1,3 +1,4 @@
+from firebase_admin import auth
 from django.shortcuts import render
 
 from django.contrib.auth.models import User
@@ -79,14 +80,14 @@ class LogoutView(APIView):
 class VerifyOTPView(APIView):
     def post(self, request):
         phone_number = request.data.get("phone_number")
-        id_token = request.data.get("id_token")  # ✅ Frontend sends Firebase ID Token
+        id_token = request.data.get("id_token")  # Frontend sends Firebase ID Token
 
         try:
-            decoded_token = auth.verify_id_token(id_token)  # ✅ Verify token with Firebase
+            decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
             user = User.objects.get(phone_number=phone_number)
 
             if decoded_token:
-                user.is_active = True  # ✅ Activate account
+                user.is_active = True  # Activate account
                 user.save()
                 return Response({"message": "Phone number verified successfully"}, status=status.HTTP_200_OK)
             return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
