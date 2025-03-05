@@ -100,6 +100,8 @@ TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 
 # CORS (Allow frontend to connect)
 CORS_ALLOWED_ORIGINS = [
+    "balasteps-auth.web.app",
+    "balasteps-auth.firebaseapp.com",
     "http://localhost:3000",  # React Localhost
 ]
 
