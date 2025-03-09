@@ -127,6 +127,6 @@ AUTHENTICATION_BACKENDS = (
 INFOBIP_API_KEY = "App 8b521607530ebc8fb206735fc0c907f1-5a51575e-d9b7-4e5e-8687-d6abda539a5c"
 INFOBIP_BASE_URL = "https://4ewdyn.api.infobip.com"
 
-SMSC_LOGIN = madenna        # SMSC.kz login
-SMSC_PASSWORD = Madenna%212003  # SMSC.kz password
-SMSC_SENDER = SMSC.KZ      # sender name (must be registered in SMSC.kz)
+SMSC_LOGIN = "madenna"        # SMSC.kz login
+SMSC_PASSWORD = "Madenna%212003"  # SMSC.kz password
+SMSC_SENDER = "SMSC.KZ"      # sender name (must be registered in SMSC.kz)
