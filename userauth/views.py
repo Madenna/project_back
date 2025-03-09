@@ -83,7 +83,7 @@ class ProtectedView(APIView):
 
 class RegisterView(APIView):
     serializer_class = RegisterSerializer
-
+    @swagger_auto_schema(request_body=RegisterSerializer)
     def post(self, request):
         phone_number = request.data.get("phone_number")
         existing_user = User.objects.filter(phone_number=phone_number).first()
@@ -480,23 +480,53 @@ class RequestPhoneNumberChangeView(APIView):
 #             return Response({"error": "OTP not found or expired"}, status=status.HTTP_404_NOT_FOUND)
 
 class VerifyOTPView(APIView):
+    serializer_class = OTPVerificationSerializer
+    @swagger_auto_schema(request_body=OTPVerificationSerializer)
     def post(self, request):
-        user_otp = request.data.get("otp")
-        phone_number = request.data.get("phone_number")
+        serializer = OTPVerificationSerializer(data=request.data)
+        # user_otp = request.data.get("otp")
+        # phone_number = request.data.get("phone_number")
 
-        if not phone_number or not user_otp:
-            return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+        # if not phone_number or not user_otp:
+        #     return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            user = User.objects.get(phone_number=phone_number)
-            otp_verification = OTPVerification.objects.get(user=user)
+        # try:
+        #     user = User.objects.get(phone_number=phone_number)
+        #     otp_verification = OTPVerification.objects.get(user=user)
 
-            if str(user_otp) == str(otp_verification.otp_code):
-                user.is_active = True
-                user.save()
-                otp_verification.delete()  # Delete OTP after verification
-                return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
-            else:
-                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-        except (User.DoesNotExist, OTPVerification.DoesNotExist):
-            return Response({"error": "User or OTP not found"}, status=status.HTTP_404_NOT_FOUND)
+        #     if str(user_otp) == str(otp_verification.otp_code):
+        #         user.is_active = True
+        #         user.save()
+        #         otp_verification.delete()  # Delete OTP after verification
+        #         return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+        #     else:
+        #         return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        # except (User.DoesNotExist, OTPVerification.DoesNotExist):
+        #     return Response({"error": "User or OTP not found"}, status=status.HTTP_404_NOT_FOUND)
+        if serializer.is_valid():
+            phone_number = serializer.validated_data["phone_number"]
+            user_otp = serializer.validated_data["otp"]
+
+            if not phone_number or not user_otp:
+                return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                # Get user by phone number
+                user = User.objects.get(phone_number=phone_number)
+                otp_verification = OTPVerification.objects.get(user=user)
+
+                if str(user_otp) == str(otp_verification.otp_code):
+                    user.is_active = True  # Activate user
+                    user.save()
+                    otp_verification.delete()  # Delete OTP record after successful verification
+                    return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            except OTPVerification.DoesNotExist:
+                return Response({"error": "OTP not found or expired"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
