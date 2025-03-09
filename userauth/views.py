@@ -354,7 +354,10 @@ class SendOTPView(APIView):
 #             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class VerifyOTPView(APIView):
+    serializer_class = OTPVerificationSerializer 
+    @swagger_auto_schema(request_body=OTPVerificationSerializer)
     def post(self, request):
+        serializer = OTPVerificationSerializer(data=request.data)
         user_otp = request.data.get("otp")
         phone_number = request.data.get("phone_number")
         if not phone_number or not user_otp:
