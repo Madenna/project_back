@@ -62,7 +62,7 @@ class RegisterView(APIView):
             user.save()
 
             # Generate OTP and save it in OTPVerification model
-            otp_verification, created = OTPVerification.objects.get_or_create(user=user)
+            otp_verification = OTPVerification.objects.create(user=user)
             otp_verification.generate_otp()
 
             # Send OTP via SMSC
