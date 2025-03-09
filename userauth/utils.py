@@ -94,6 +94,7 @@ def send_otp_smsc(phone_number, otp_code):
 
     # Send SMS
     response = requests.get(url)
+    print("SMSC Response:", response.text)
     response_data = response.json()
 
     print("SMSC Response:", response_data) 

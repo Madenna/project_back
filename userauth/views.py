@@ -74,6 +74,8 @@ class RegisterView(APIView):
 
             # # Save OTP in the database (assuming you have an OTPVerification model)
             # OTPVerification.objects.create(phone_number=user.phone_number, otp_code=otp_code)
+            print("OTP Sent to:", user.phone_number)
+            print("Generated OTP:", otp_verification.otp_code)
 
             return Response({"message": "OTP sent successfully"}, status=status.HTTP_201_CREATED)
         
