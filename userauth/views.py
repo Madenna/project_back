@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from .serializers import (UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
     PasswordResetSerializer, ProfileSerializer, PhoneNumberChangeSerializer,
-    VerifyNewPhoneNumberSerializer, RequestPhoneNumberChangeSerializer)
+    VerifyNewPhoneNumberSerializer, RequestPhoneNumberChangeSerializer, OTPRequestSerializer)
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -233,26 +233,87 @@ class PasswordResetView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# class VerifyNewPhoneNumberView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+#     serializer_class = VerifyNewPhoneNumberSerializer
+#     @swagger_auto_schema(request_body=VerifyNewPhoneNumberSerializer)
+#     def post(self, request):
+#         serializer = VerifyNewPhoneNumberSerializer(data=request.data)
+#         if serializer.is_valid():
+#             new_phone_number = serializer.validated_data["new_phone_number"]
+#             user_otp = serializer.validated_data["otp"]
+#             if not new_phone_number or not user_otp:
+#                 return Response({"error": "New phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#             try:
+#                 # Check if OTP is correct for the new phone number
+#                 print(f"Checking OTP for {new_phone_number}...")
+#                 otp_verification = OTPVerification.objects.filter(user=request.user).first()
+#                 print("OTP Verification Record:", otp_verification)
+#                 if str(user_otp) == str(otp_verification.otp_code):
+#                     # Update phone number if OTP is correct
+#                     user = request.user
+#                     user.phone_number = new_phone_number
+#                     user.temp_phone_number = None  # Clear temporary field
+#                     user.save()
+
+#                     # Delete OTP record after successful verification
+#                     otp_verification.delete()
+
+#                     return Response({
+#                         "message": "Phone number updated successfully."
+#                     }, status=status.HTTP_200_OK)
+#                 else:
+#                     return Response({
+#                         "error": "Invalid OTP"
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+#             except OTPVerification.DoesNotExist:
+#                 return Response({
+#                     "error": "OTP not found or expired"
+#                 }, status=status.HTTP_404_NOT_FOUND)
+#             except Exception as e:
+#                 return Response({
+#                     "error": str(e)
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # If serializer is not valid
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 class VerifyNewPhoneNumberView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = VerifyNewPhoneNumberSerializer
+
     @swagger_auto_schema(request_body=VerifyNewPhoneNumberSerializer)
     def post(self, request):
         serializer = VerifyNewPhoneNumberSerializer(data=request.data)
+        
+        # Validate request body
         if serializer.is_valid():
             new_phone_number = serializer.validated_data["new_phone_number"]
-            user_otp = request.data.get("otp")
+            user_otp = serializer.validated_data["otp"]
+
             if not new_phone_number or not user_otp:
                 return Response({"error": "New phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                # ✅ Check if OTP is correct for the new phone number
-                print(f"Checking OTP for {new_phone_number}...")
-                otp_verification = OTPVerification.objects.filter(user=request.user).first()
-                print("OTP Verification Record:", otp_verification)
+                user = request.user
+
+                # Check if the temporary phone number matches the request
+                if user.temp_phone_number != new_phone_number:
+                    return Response({
+                        "error": "Temporary phone number mismatch."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                # Check if OTP exists for this user
+                otp_verification = OTPVerification.objects.filter(user=user).first()
+                if not otp_verification:
+                    return Response({
+                        "error": "OTP not found or expired"
+                    }, status=status.HTTP_404_NOT_FOUND)
+
+                # Compare OTPs
                 if str(user_otp) == str(otp_verification.otp_code):
-                    # Update phone number if OTP is correct
-                    user = request.user
+                    # ✅ Update phone number if OTP is correct
                     user.phone_number = new_phone_number
                     user.temp_phone_number = None  # Clear temporary field
                     user.save()
@@ -267,10 +328,7 @@ class VerifyNewPhoneNumberView(APIView):
                     return Response({
                         "error": "Invalid OTP"
                     }, status=status.HTTP_400_BAD_REQUEST)
-            except OTPVerification.DoesNotExist:
-                return Response({
-                    "error": "OTP not found or expired"
-                }, status=status.HTTP_404_NOT_FOUND)
+
             except Exception as e:
                 return Response({
                     "error": str(e)
@@ -278,7 +336,7 @@ class VerifyNewPhoneNumberView(APIView):
 
         # If serializer is not valid
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
 class RequestPhoneNumberChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = RequestPhoneNumberChangeSerializer
@@ -306,17 +364,23 @@ class RequestPhoneNumberChangeView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class SendOTPView(APIView):
-    def post(self, request):
-        phone_number = request.data.get("phone_number")
-        if phone_number:
-            otp = send_otp_via_infobip(phone_number)
-            if otp:
-                request.session['otp'] = otp  # Save OTP in session
-                return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
-            else:
-                return Response({"error": "Failed to send OTP"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return Response({"error": "Phone number is required"}, status=status.HTTP_400_BAD_REQUEST)
+# class SendOTPView(APIView):
+#     serializer_class = OTPRequestSerializer
+#     @swagger_auto_schema(request_body=OTPRequestSerializer)
+#     def post(self, request):
+#         serializer = OTPRequestSerializer(data=request.data)
+#         if serializer.is_valid():
+#             phone_number = serializer.validated_data["phone_number"]
+
+#             # Generate and send OTP
+#             otp_code = send_otp_smsc(phone_number)
+#             if otp_code:
+#                 return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"error": "Failed to send OTP."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#         # If request body is invalid
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # class VerifyOTPView(APIView):
 #     def post(self, request):

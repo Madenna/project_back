@@ -14,6 +14,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'full_name', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
+class OTPRequestSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+
+    def validate_phone_number(self, value):
+        if not value.startswith("+") or not value[1:].isdigit():
+            raise serializers.ValidationError("Phone number must start with '+' followed by digits.")
+        return value
+
 # OTP Verification Serializer
 class OTPVerificationSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
@@ -31,6 +39,11 @@ class PhoneNumberChangeSerializer(serializers.Serializer):
 # Verify New Phone Number Serializer
 class VerifyNewPhoneNumberSerializer(serializers.Serializer):
     new_phone_number = serializers.CharField()
+    otp = serializers.CharField()
+    def validate_new_phone_number(self, value):
+        if not value.startswith("+") or not value[1:].isdigit():
+            raise serializers.ValidationError("Phone number must start with '+' followed by digits.")
+        return value
 
 class RequestPhoneNumberChangeSerializer(serializers.Serializer):
     new_phone_number = serializers.CharField(max_length=15)
