@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import User, Profile
-from .utils import send_otp_firebase
+from .utils import send_otp_smsc
 
 # Login Serializer
 class LoginSerializer(serializers.Serializer):
@@ -17,13 +17,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 # OTP Verification Serializer
 class OTPVerificationSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
-    id_token = serializers.CharField()
+    otp = serializers.CharField()
 
 # Password Reset Serializer
 class PasswordResetSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
     new_password = serializers.CharField(write_only=True)
-    id_token = serializers.CharField()
 
 # Phone Number Change Serializer
 class PhoneNumberChangeSerializer(serializers.Serializer):
@@ -32,7 +31,6 @@ class PhoneNumberChangeSerializer(serializers.Serializer):
 # Verify New Phone Number Serializer
 class VerifyNewPhoneNumberSerializer(serializers.Serializer):
     new_phone_number = serializers.CharField()
-    id_token = serializers.CharField()
 
 class RequestPhoneNumberChangeSerializer(serializers.Serializer):
     new_phone_number = serializers.CharField(max_length=15)
@@ -49,7 +47,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     additional_info = serializers.CharField(required=False, allow_null=True)
     city = serializers.CharField(required=False, allow_null=True)
 
-
     class Meta:
         model = Profile
         fields = ['full_name', 'phone_number', 'profile_photo', 'additional_info', 'city']
@@ -57,7 +54,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         if not rep['profile_photo']:
-            rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+            # rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+            request = self.context.get('request')
+            default_photo_url = '/media/profile_photos/default.jpg'
+            if request:
+                default_photo_url = request.build_absolute_uri(default_photo_url)
+            rep['profile_photo'] = rep['profile_photo'] or default_photo_url
         return rep
 
     def update(self, instance, validated_data):
@@ -67,7 +69,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         new_phone_number = user_data.get('phone_number')
         if new_phone_number and new_phone_number != instance.user.phone_number:
             # Send OTP for new phone number
-            otp_response = send_otp_firebase(new_phone_number)
+            otp_response = send_otp_smsc(new_phone_number)
             # Temporarily store new phone number in profile model (or create a separate field)
             instance.user.temp_phone_number = new_phone_number  # This field should exist in the User model
             instance.user.save()
@@ -94,7 +96,8 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def get_profile(self, obj):
-        return ProfileSerializer(obj.profile).data if obj.profile else None
+        profile = getattr(obj, 'profile', None)
+        return ProfileSerializer(profile).data if profile else None
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile', None)

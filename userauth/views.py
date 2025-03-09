@@ -1,5 +1,6 @@
 from firebase_admin import auth
 from django.shortcuts import render
+import random
 
 from django.contrib.auth import get_user_model
 
@@ -19,6 +20,8 @@ from django.contrib.auth import authenticate
 from .models import User, OTPVerification, Profile
 
 from .utils import send_otp_firebase, create_firebase_id_token
+from .utils import send_otp_via_infobip, send_otp_smsc
+
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -38,21 +41,41 @@ class RegisterView(APIView):
         phone_number = request.data.get("phone_number")
         
         # Check if user already exists
-        if User.objects.filter(phone_number=phone_number).exists():
-            return Response({"error": "A user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if a non-verified user exists with this phone number
+        existing_user = User.objects.filter(phone_number=phone_number).first()
+
+        if existing_user:
+            if not existing_user.is_active:
+                # Delete the non-verified user and proceed with registration
+                existing_user.delete()
+            else:
+                return Response({"error": "A user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
 
         # Continue with registration
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
             user = serializer.save()
+            user.set_password(user.password)  # Hash the password before saving
             user.is_active = False  # User must verify OTP first
             user.save()
 
-            # Notify the frontend that Firebase should handle OTP
-            otp_response = send_otp_firebase(user.phone_number)
+            # Generate OTP and save it in OTPVerification model
+            otp_verification, created = OTPVerification.objects.get_or_create(user=user)
+            otp_verification.generate_otp()
 
-            return Response({"message": "OTP must be sent from frontend", "otp_response": otp_response}, status=status.HTTP_201_CREATED)
+            # Send OTP via SMSC
+            send_otp_smsc(user.phone_number, otp_verification.otp_code)
+
+            # otp_code = send_otp_smsc(user.phone_number)
+            # if not otp_code:
+            #     return Response({"error": "Failed to send OTP. Try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # # Save OTP in the database (assuming you have an OTPVerification model)
+            # OTPVerification.objects.create(phone_number=user.phone_number, otp_code=otp_code)
+
+            return Response({"message": "OTP sent successfully"}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -95,20 +118,20 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
-class VerifyOTPView(APIView):
-    serializer_class = OTPVerificationSerializer
-    @swagger_auto_schema(request_body=OTPVerificationSerializer)
-    def post(self, request):
-        serializer = OTPVerificationSerializer(data=request.data)
-        if serializer.is_valid():
-            phone_number = serializer.validated_data["phone_number"]
-            id_token = serializer.validated_data["id_token"]
-            auth.verify_id_token(id_token)
-            user = User.objects.get(phone_number=phone_number)
-            user.is_active = True
-            user.save()
-            return Response({"message": "Phone number verified successfully"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class VerifyOTPView(APIView):
+#     serializer_class = OTPVerificationSerializer
+#     @swagger_auto_schema(request_body=OTPVerificationSerializer)
+#     def post(self, request):
+#         serializer = OTPVerificationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             phone_number = serializer.validated_data["phone_number"]
+#             id_token = serializer.validated_data["id_token"]
+#             auth.verify_id_token(id_token)
+#             user = User.objects.get(phone_number=phone_number)
+#             user.is_active = True
+#             user.save()
+#             return Response({"message": "Phone number verified successfully"}, status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class ProfileView(generics.RetrieveUpdateAPIView):
     from .serializers import ProfileSerializer
@@ -171,8 +194,8 @@ class PasswordResetView(APIView):
     @swagger_auto_schema(request_body=PasswordResetSerializer)
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
-        # phone_number = request.data.get("phone_number")
-        # new_password = request.data.get("new_password")
+        phone_number = request.data.get("phone_number")
+        new_password = request.data.get("new_password")
 
         # try:
         #     user = User.objects.get(phone_number=phone_number)
@@ -182,28 +205,31 @@ class PasswordResetView(APIView):
         # except User.DoesNotExist:
         #     return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         if serializer.is_valid():
-            phone_number = serializer.validated_data["phone_number"]
-            new_password = serializer.validated_data["new_password"]
-            id_token = serializer.validated_data.get("id_token")  # Firebase ID Token for OTP Verification
+            # phone_number = serializer.validated_data["phone_number"]
+            # new_password = serializer.validated_data["new_password"]
+            # id_token = serializer.validated_data.get("id_token")  # Firebase ID Token for OTP Verification
 
             # Check if the user exists
             try:
                 user = User.objects.get(phone_number=phone_number)
+                user.set_password(new_password)  # Hash the new password
+                user.save()
+                return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
             except User.DoesNotExist:
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-            # Verify OTP using Firebase
-            try:
-                decoded_token = auth.verify_id_token(id_token)
-                if decoded_token.get("phone_number") == phone_number:
-                    # Reset password if verification is successful
-                    user.set_password(new_password)
-                    user.save()
-                    return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
-                else:
-                    return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # # Verify OTP using Firebase
+            # try:
+            #     decoded_token = auth.verify_id_token(id_token)
+            #     if decoded_token.get("phone_number") == phone_number:
+            #         # Reset password if verification is successful
+            #         user.set_password(new_password)
+            #         user.save()
+            #         return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+            #     else:
+            #         return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
+            # except Exception as e:
+            #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -213,48 +239,44 @@ class VerifyNewPhoneNumberView(APIView):
     @swagger_auto_schema(request_body=VerifyNewPhoneNumberSerializer)
     def post(self, request):
         serializer = VerifyNewPhoneNumberSerializer(data=request.data)
-        # if serializer.is_valid():
-        #     new_phone_number = serializer.validated_data["new_phone_number"]
-        #     id_token = serializer.validated_data["id_token"]
-        # else:
-        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # try:
-        #     decoded_token = auth.verify_id_token(id_token)  # Verify token with Firebase
-        #     user = request.user
-
-        #     if decoded_token.get("phone_number") == new_phone_number:
-        #         user.phone_number = new_phone_number
-        #         user.temp_phone_number = None  # Clear temporary field
-        #         user.save()
-        #         return Response({"message": "Phone number updated successfully."}, status=status.HTTP_200_OK)
-        #     else:
-        #         return Response({"error": "Phone number does not match the verified token."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # except Exception as e:
-        #     return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         if serializer.is_valid():
             new_phone_number = serializer.validated_data["new_phone_number"]
-            id_token = serializer.validated_data["id_token"]
-            try:
-                decoded_token = auth.verify_id_token(id_token)
-                user = request.user
+            user_otp = request.data.get("otp")
+            if not new_phone_number or not user_otp:
+                return Response({"error": "New phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-                if decoded_token.get("phone_number") == new_phone_number:
+            try:
+                # ✅ Check if OTP is correct for the new phone number
+                print(f"Checking OTP for {new_phone_number}...")
+                otp_verification = OTPVerification.objects.filter(user=request.user).first()
+                print("OTP Verification Record:", otp_verification)
+                if str(user_otp) == str(otp_verification.otp_code):
+                    # Update phone number if OTP is correct
+                    user = request.user
                     user.phone_number = new_phone_number
-                    user.temp_phone_number = None
+                    user.temp_phone_number = None  # Clear temporary field
                     user.save()
+
+                    # Delete OTP record after successful verification
+                    otp_verification.delete()
+
                     return Response({
                         "message": "Phone number updated successfully."
                     }, status=status.HTTP_200_OK)
                 else:
                     return Response({
-                        "error": "Phone number does not match the verified token."
+                        "error": "Invalid OTP"
                     }, status=status.HTTP_400_BAD_REQUEST)
+            except OTPVerification.DoesNotExist:
+                return Response({
+                    "error": "OTP not found or expired"
+                }, status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
                 return Response({
                     "error": str(e)
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+        # If serializer is not valid
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 class RequestPhoneNumberChangeView(APIView):
@@ -267,13 +289,92 @@ class RequestPhoneNumberChangeView(APIView):
             new_phone_number = serializer.validated_data["new_phone_number"]
             user = request.user
 
+            print("Attempting to send OTP to:", new_phone_number)
+
             if user.phone_number != new_phone_number:
-                user.temp_phone_number = new_phone_number
-                user.save()
-                otp_response = send_otp_firebase(new_phone_number)
-                return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
+                otp = str(random.randint(100000, 999999))
+                send_otp_smsc(new_phone_number, otp)  # Send OTP
+
+                print("OTP sent to:", new_phone_number)  # Print confirmation
+                return Response({"message": "OTP sent to new phone number. Please verify."}, status=status.HTTP_200_OK)
+                # user.temp_phone_number = new_phone_number
+                # user.save()
+                # otp_response = send_otp_firebase(new_phone_number)
+                # return Response({"message": "OTP sent to new phone number. Please verify.", "otp_response": otp_response}, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "New phone number is the same as the current one."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SendOTPView(APIView):
+    def post(self, request):
+        phone_number = request.data.get("phone_number")
+        if phone_number:
+            otp = send_otp_via_infobip(phone_number)
+            if otp:
+                request.session['otp'] = otp  # Save OTP in session
+                return Response({"message": "OTP sent successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Failed to send OTP"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Phone number is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+# class VerifyOTPView(APIView):
+#     def post(self, request):
+#         phone_number = request.data.get("phone_number")
+#         user_otp = request.data.get("otp")
+
+#         if not phone_number or not user_otp:
+#             return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             # Get OTP from the database
+#             otp_record = OTPVerification.objects.filter(phone_number=phone_number).last()
+
+#             if otp_record:
+#                 # Check if the OTP matches
+#                 if str(user_otp) == str(otp_record.otp_code):
+#                     # Activate user if OTP is correct
+#                     user = User.objects.get(phone_number=phone_number)
+#                     user.is_active = True
+#                     user.save()
+
+#                     # Delete the OTP record after successful verification
+#                     otp_record.delete()
+
+#                     return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+#                 else:
+#                     return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+#             else:
+#                 return Response({"error": "OTP expired or invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         except User.DoesNotExist:
+#             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+#         except Exception as e:
+#             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class VerifyOTPView(APIView):
+    def post(self, request):
+        user_otp = request.data.get("otp")
+        phone_number = request.data.get("phone_number")
+        if not phone_number or not user_otp:
+            return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Get user by phone number
+            user = User.objects.get(phone_number=phone_number)
+            otp_verification = OTPVerification.objects.get(user=user)
+
+            if str(user_otp) == str(otp_verification.otp_code):
+                user.is_active = True  # Activate user
+                user.save()
+                otp_verification.delete()  # Delete OTP record after successful verification
+                return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        except OTPVerification.DoesNotExist:
+            return Response({"error": "OTP not found or expired"}, status=status.HTTP_404_NOT_FOUND)
 

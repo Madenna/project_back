@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.utils import timezone
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, phone_number, full_name, password=None, **extra_fields):
@@ -34,6 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     password = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(default=timezone.now) 
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -55,6 +57,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.full_name
     
 User = get_user_model()
+
 class OTPVerification(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     otp_code = models.CharField(max_length=6)
