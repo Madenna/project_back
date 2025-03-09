@@ -129,4 +129,4 @@ INFOBIP_BASE_URL = "https://4ewdyn.api.infobip.com"
 
 SMSC_LOGIN = "madenna"        # SMSC.kz login
 SMSC_PASSWORD = "Madenna%212003"  # SMSC.kz password
-SMSC_SENDER = "SMSC.KZ"      # sender name (must be registered in SMSC.kz)
+SMSC_SENDER = "SMSC.KZ"     # sender name (must be registered in SMSC.kz)

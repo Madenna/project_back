@@ -34,51 +34,83 @@ class ProtectedView(APIView):
         return Response({"message": "You are authenticated!"})
 
 # Register User
+# class RegisterView(APIView):
+#     serializer_class = RegisterSerializer
+#     @swagger_auto_schema(request_body=RegisterSerializer)
+#     def post(self, request):
+#         phone_number = request.data.get("phone_number")
+        
+#         # Check if user already exists
+#         # Check if a non-verified user exists with this phone number
+#         existing_user = User.objects.filter(phone_number=phone_number).first()
+
+#         if existing_user:
+#             if not existing_user.is_active:
+#                 # Delete the non-verified user and proceed with registration
+#                 existing_user.delete()
+#             else:
+#                 return Response({"error": "A user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+#         # Continue with registration
+#         serializer = RegisterSerializer(data=request.data)
+
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             user.set_password(user.password)  # Hash the password before saving
+#             user.is_active = False  # User must verify OTP first
+#             user.save()
+
+#             # Generate OTP and save it in OTPVerification model
+#             otp_verification = OTPVerification.objects.create(user=user)
+#             otp_verification.generate_otp()
+
+#             # Send OTP via SMSC
+#             send_otp_smsc(user.phone_number, otp_verification.otp_code)
+
+#             # otp_code = send_otp_smsc(user.phone_number)
+#             # if not otp_code:
+#             #     return Response({"error": "Failed to send OTP. Try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#             # # Save OTP in the database (assuming you have an OTPVerification model)
+#             # OTPVerification.objects.create(phone_number=user.phone_number, otp_code=otp_code)
+#             print("OTP Sent to:", user.phone_number)
+#             print("Generated OTP:", otp_verification.otp_code)
+
+#             return Response({"message": "OTP sent successfully"}, status=status.HTTP_201_CREATED)
+        
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class RegisterView(APIView):
     serializer_class = RegisterSerializer
-    @swagger_auto_schema(request_body=RegisterSerializer)
+
     def post(self, request):
         phone_number = request.data.get("phone_number")
-        
-        # Check if user already exists
-        # Check if a non-verified user exists with this phone number
         existing_user = User.objects.filter(phone_number=phone_number).first()
 
         if existing_user:
             if not existing_user.is_active:
-                # Delete the non-verified user and proceed with registration
                 existing_user.delete()
             else:
                 return Response({"error": "A user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
-
-        # Continue with registration
         serializer = RegisterSerializer(data=request.data)
 
         if serializer.is_valid():
             user = serializer.save()
-            user.set_password(user.password)  # Hash the password before saving
+            user.set_password(user.password)  # Hash the password
             user.is_active = False  # User must verify OTP first
             user.save()
 
-            # Generate OTP and save it in OTPVerification model
-            otp_verification = OTPVerification.objects.create(user=user)
+            # Generate and send OTP
+            otp_verification, created = OTPVerification.objects.get_or_create(user=user)
             otp_verification.generate_otp()
 
-            # Send OTP via SMSC
-            send_otp_smsc(user.phone_number, otp_verification.otp_code)
-
-            # otp_code = send_otp_smsc(user.phone_number)
-            # if not otp_code:
-            #     return Response({"error": "Failed to send OTP. Try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            # # Save OTP in the database (assuming you have an OTPVerification model)
-            # OTPVerification.objects.create(phone_number=user.phone_number, otp_code=otp_code)
-            print("OTP Sent to:", user.phone_number)
-            print("Generated OTP:", otp_verification.otp_code)
+            if not send_otp_smsc(user.phone_number, otp_verification.otp_code):
+                return Response({"error": "Failed to send OTP. Try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response({"message": "OTP sent successfully"}, status=status.HTTP_201_CREATED)
-        
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 # Login and get JWT token
@@ -419,31 +451,52 @@ class RequestPhoneNumberChangeView(APIView):
 #         except Exception as e:
 #             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# class VerifyOTPView(APIView):
+#     serializer_class = OTPVerificationSerializer 
+#     @swagger_auto_schema(request_body=OTPVerificationSerializer)
+#     def post(self, request):
+#         serializer = OTPVerificationSerializer(data=request.data)
+#         user_otp = request.data.get("otp")
+#         phone_number = request.data.get("phone_number")
+#         if not phone_number or not user_otp:
+#             return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             # Get user by phone number
+#             user = User.objects.get(phone_number=phone_number)
+#             otp_verification = OTPVerification.objects.get(user=user)
+
+#             if str(user_otp) == str(otp_verification.otp_code):
+#                 user.is_active = True  # Activate user
+#                 user.save()
+#                 otp_verification.delete()  # Delete OTP record after successful verification
+#                 return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         except User.DoesNotExist:
+#             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+#         except OTPVerification.DoesNotExist:
+#             return Response({"error": "OTP not found or expired"}, status=status.HTTP_404_NOT_FOUND)
+
 class VerifyOTPView(APIView):
-    serializer_class = OTPVerificationSerializer 
-    @swagger_auto_schema(request_body=OTPVerificationSerializer)
     def post(self, request):
-        serializer = OTPVerificationSerializer(data=request.data)
         user_otp = request.data.get("otp")
         phone_number = request.data.get("phone_number")
+
         if not phone_number or not user_otp:
             return Response({"error": "Phone number and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Get user by phone number
             user = User.objects.get(phone_number=phone_number)
             otp_verification = OTPVerification.objects.get(user=user)
 
             if str(user_otp) == str(otp_verification.otp_code):
-                user.is_active = True  # Activate user
+                user.is_active = True
                 user.save()
-                otp_verification.delete()  # Delete OTP record after successful verification
+                otp_verification.delete()  # Delete OTP after verification
                 return Response({"message": "OTP verified successfully"}, status=status.HTTP_200_OK)
             else:
                 return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        except OTPVerification.DoesNotExist:
-            return Response({"error": "OTP not found or expired"}, status=status.HTTP_404_NOT_FOUND)
-
+        except (User.DoesNotExist, OTPVerification.DoesNotExist):
+            return Response({"error": "User or OTP not found"}, status=status.HTTP_404_NOT_FOUND)

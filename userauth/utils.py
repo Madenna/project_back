@@ -4,6 +4,8 @@ from firebase_admin import auth
 import requests
 import random
 from .models import User, OTPVerification
+import json
+import urllib.parse
 
 def create_firebase_id_token(phone_number):
     try:
@@ -75,51 +77,90 @@ def send_otp_via_infobip(phone_number, request):
     
     print("Generated OTP:", otp)
 
-SMSC_LOGIN = "madenna"        # SMSC.kz login
-SMSC_PASSWORD = "Madenna!2003"  # SMSC.kz password
-SMSC_SENDER = "SMSC.KZ"      # sender name (must be registered in SMSC.kz)
+# SMSC_LOGIN = "madenna"        # SMSC.kz login
+# SMSC_PASSWORD = "Madenna!2003"  # SMSC.kz password
+# SMSC_SENDER = "SMSC.KZ"    # sender name (must be registered in SMSC.kz)
+# SMSC_API_URL = "https://smsc.kz/sys/send.php"  # SMS sending endpoint
+# SMSC_API_KEY = None  # Optional: API key if using API key authorization
 
-# Function to send OTP
+# # Function to send OTP
+# def send_otp_smsc(phone_number, otp_code):
+#     # otp_code = str(random.randint(100000, 999999))
+#     if not otp_code:
+#         otp_code = str(random.randint(100000, 999999))
+#     message = f"Your Balasteps OTP is {otp_code}"
+
+#     params = {
+#         "login": SMSC_LOGIN,
+#         "psw": SMSC_PASSWORD,
+#         "phones": phone_number,
+#         "mes": message,
+#         "fmt": 3,  # JSON response
+#         "charset": "utf-8"
+#     }
+#     if SMSC_SENDER:
+#         params["sender"] = SMSC_SENDER
+#     # URL encode the parameters
+#     url = SMSC_API_URL + "?" + urllib.parse.urlencode(params)
+
+#     # Send SMS
+#     response = requests.get(url)
+#     print("SMSC Response:", response.text)
+#     response_data = response.json()
+
+#     print("SMSC Response:", response_data) 
+
+#     # Handle different error codes
+#     if "error" in response_data:
+#         error_code = response_data.get("error_code")
+#         if error_code == 2:
+#             print("Invalid login or password.")
+#         elif error_code == 8:
+#             print("Message cannot be delivered.")
+#         elif error_code == 6:
+#             print("Message forbidden by text or sender name.")
+#         else:
+#             print(f"Unknown error (code {error_code}): {response_data['error']}")
+#         return None
+
+#     try:
+#         user = User.objects.filter(phone_number=phone_number).first() or User.objects.filter(temp_phone_number=phone_number).first()
+
+#         if user:
+#             # Create or update the OTP record for the user
+#             otp_record, created = OTPVerification.objects.update_or_create(
+#                 user=user,
+#                 defaults={'otp_code': otp_code}
+#             )
+#             print(f"Saved OTP: {otp_code} for {phone_number} (Created: {created})")
+#         else:
+#             print(f"User with phone number {phone_number} not found.")
+#             return None
+
+#     except Exception as e:
+#         print(f"Error saving OTP: {str(e)}")
+#         return None
+
+#     print(f"Sent OTP: {otp_code} to {phone_number}")
+#     return otp_code
+
+from .smsc_api import SMSC
+from django.conf import settings
+
 def send_otp_smsc(phone_number, otp_code):
-    # otp_code = str(random.randint(100000, 999999))
-    if not otp_code:
-        otp_code = str(random.randint(100000, 999999))
+    smsc = SMSC()
+
     message = f"Your Balasteps OTP is {otp_code}"
+    sender = settings.SMSC_SENDER  # Optional sender ID from settings
 
-    # Prepare API URL
-    url = f"https://smsc.kz/sys/send.php?login={SMSC_LOGIN}&psw={SMSC_PASSWORD}&phones={phone_number}&mes={message}&fmt=3"
+    # Send SMS using the SMSC library
+    response = smsc.send_sms(phone_number, message, sender=sender)
 
-    if SMSC_SENDER:
-        url += f"&sender={SMSC_SENDER}"
-
-    # Send SMS
-    response = requests.get(url)
-    print("SMSC Response:", response.text)
-    response_data = response.json()
-
-    print("SMSC Response:", response_data) 
-
-    if "error" in response_data:
-        print(f"SMSC Error: {response_data['error']}")
+    # Check if the response has an error
+    if int(response[1]) < 0:
+        print(f"Failed to send OTP: Error code {response[1]}")
         return None
 
-    try:
-        user = User.objects.filter(phone_number=phone_number).first() or User.objects.filter(temp_phone_number=phone_number).first()
-
-        if user:
-            # Create or update the OTP record for the user
-            otp_record, created = OTPVerification.objects.update_or_create(
-                user=user,
-                defaults={'otp_code': otp_code}
-            )
-            print(f"Saved OTP: {otp_code} for {phone_number} (Created: {created})")
-        else:
-            print(f"User with phone number {phone_number} not found.")
-            return None
-
-    except Exception as e:
-        print(f"Error saving OTP: {str(e)}")
-        return None
-
-    print(f"Sent OTP: {otp_code} to {phone_number}")
+    print(f"OTP Sent to: {phone_number}")
+    print(f"Generated OTP: {otp_code}")
     return otp_code
