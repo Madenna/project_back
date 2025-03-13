@@ -8,75 +8,75 @@ import json
 import urllib.parse
 from django.core.mail import send_mail
 
-def create_firebase_id_token(phone_number):
-    try:
-        # Check if user exists on Firebase
-        try:
-            user = auth.get_user_by_phone_number(f"{phone_number}")
-        except firebase_admin.auth.UserNotFoundError:
-            # Create a new user if not found
-            user = auth.create_user(phone_number=f"{phone_number}")
+# def create_firebase_id_token(phone_number):
+#     try:
+#         # Check if user exists on Firebase
+#         try:
+#             user = auth.get_user_by_phone_number(f"{phone_number}")
+#         except firebase_admin.auth.UserNotFoundError:
+#             # Create a new user if not found
+#             user = auth.create_user(phone_number=f"{phone_number}")
 
-        # Generate a custom token
-        custom_token = auth.create_custom_token(user.uid)
+#         # Generate a custom token
+#         custom_token = auth.create_custom_token(user.uid)
 
-        # Exchange custom token for ID token using Firebase REST API
-        firebase_api_key = "AIzaSyCY22I94lUuBiZ1AnfiUPSK1A0qvVzw-8Q"  
-        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={firebase_api_key}"
+#         # Exchange custom token for ID token using Firebase REST API
+#         firebase_api_key = "AIzaSyCY22I94lUuBiZ1AnfiUPSK1A0qvVzw-8Q"  
+#         url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={firebase_api_key}"
         
-        payload = {
-            "token": custom_token.decode('utf-8'),
-            "returnSecureToken": True
-        }
+#         payload = {
+#             "token": custom_token.decode('utf-8'),
+#             "returnSecureToken": True
+#         }
         
-        response = requests.post(url, json=payload)
-        id_token = response.json().get('idToken')
+#         response = requests.post(url, json=payload)
+#         id_token = response.json().get('idToken')
         
-        if id_token:
-            print("Firebase ID Token:", id_token)
-            return id_token
-        else:
-            print("Failed to get ID Token:", response.json())
-            return None
+#         if id_token:
+#             print("Firebase ID Token:", id_token)
+#             return id_token
+#         else:
+#             print("Failed to get ID Token:", response.json())
+#             return None
 
-    except Exception as e:
-        print("Error creating Firebase ID token:", str(e))
-        return None
+#     except Exception as e:
+#         print("Error creating Firebase ID token:", str(e))
+#         return None
 
-def send_otp_firebase(phone_number):
-    try:
-        return f"Firebase OTP must be sent from the frontend for {phone_number}." # returns message instructing frontend to handle OTP requests
-    except Exception as e:
-        return str(e)
+# def send_otp_firebase(phone_number):
+#     try:
+#         return f"Firebase OTP must be sent from the frontend for {phone_number}." # returns message instructing frontend to handle OTP requests
+#     except Exception as e:
+#         return str(e)
 
-def send_otp_via_infobip(phone_number, request):
-    otp = random.randint(100000, 999999)
-    url = f"{settings.INFOBIP_BASE_URL}/sms/2/text/advanced" #4ewdyn.api.infobip.com
-    payload = {
-        "messages": [
-            {
-                "from": "InfoSMS",
-                "destinations": [{"to": phone_number}],
-                "text": f"Your OTP is {otp}"
-            }
-        ]
-    }
-    headers = {
-        'Authorization': settings.INFOBIP_API_KEY,
-        'Content-Type': 'application/json'
-    }
-    response = requests.post(url, json=payload, headers=headers)
-    print("Infobip Response:", response.status_code, response.text)  
-    if response.status_code == 200:
-        request.session['otp'] = otp  # ✅ Save OTP in session
-        request.session['phone_number'] = phone_number  # ✅ Save phone number too
-        print("Generated OTP:", otp)
-        return otp
-    else:
-        print("Error:", response.text)
-        return None
+# def send_otp_via_infobip(phone_number, request):
+#     otp = random.randint(100000, 999999)
+#     url = f"{settings.INFOBIP_BASE_URL}/sms/2/text/advanced" #4ewdyn.api.infobip.com
+#     payload = {
+#         "messages": [
+#             {
+#                 "from": "InfoSMS",
+#                 "destinations": [{"to": phone_number}],
+#                 "text": f"Your OTP is {otp}"
+#             }
+#         ]
+#     }
+#     headers = {
+#         'Authorization': settings.INFOBIP_API_KEY,
+#         'Content-Type': 'application/json'
+#     }
+#     response = requests.post(url, json=payload, headers=headers)
+#     print("Infobip Response:", response.status_code, response.text)  
+#     if response.status_code == 200:
+#         request.session['otp'] = otp  # ✅ Save OTP in session
+#         request.session['phone_number'] = phone_number  # ✅ Save phone number too
+#         print("Generated OTP:", otp)
+#         return otp
+#     else:
+#         print("Error:", response.text)
+#         return None
     
-    print("Generated OTP:", otp)
+#     print("Generated OTP:", otp)
 
 # SMSC_LOGIN = "madenna"        # SMSC.kz login
 # SMSC_PASSWORD = "Madenna!2003"  # SMSC.kz password
@@ -145,20 +145,20 @@ def send_otp_via_infobip(phone_number, request):
 #     print(f"Sent OTP: {otp_code} to {phone_number}")
 #     return otp_code
 
-from .smsc_api import SMSC
+# from .smsc_api import SMSC
 from django.conf import settings
 
-def send_otp_smsc(phone_number, otp_code):
-    smsc = SMSC()
-    message = f"Your Balasteps OTP is {otp_code}"
-    response = smsc.send_sms(phone_number, message, sender=SMSC_SENDER)
-    print("SMSC Response:", response)  # Log response for debugging
+# def send_otp_smsc(phone_number, otp_code):
+#     smsc = SMSC()
+#     message = f"Your Balasteps OTP is {otp_code}"
+#     response = smsc.send_sms(phone_number, message, sender=SMSC_SENDER)
+#     print("SMSC Response:", response)  # Log response for debugging
 
-    if response[1].startswith("-"):
-        print(f"SMSC Error: {response}")
-        return None
+#     if response[1].startswith("-"):
+#         print(f"SMSC Error: {response}")
+#         return None
 
-    return otp_code
+#     return otp_code
 
 # def send_otp_email(email):
 #     """Generate OTP and send it via email."""
