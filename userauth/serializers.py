@@ -169,7 +169,7 @@
 
 from rest_framework import serializers
 from django.utils import timezone
-from .models import User, Profile, OTPVerification
+from .models import User, Profile, OTPVerification, Child
 
 # -------------------------------
 # ✅ REGISTER SERIALIZER
@@ -386,3 +386,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+class ChildSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Child
+        fields = ["id", "full_name", "birthday", "gender", "diagnosis"]
+        read_only_fields = ['id', 'parent'] 
+    def create(self, validated_data):
+        """
+        ✅ Automatically assigns `parent` (current user) when adding a child.
+        ✅ ID is auto-generated.
+        """
+        request = self.context.get("request")
+        validated_data["parent"] = request.user  # ✅ Assign parent automatically
+        return super().create(validated_data)

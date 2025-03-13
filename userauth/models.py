@@ -187,3 +187,14 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"OTP for {self.user.email}"
+    
+class Child(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name="children")
+    full_name = models.CharField(max_length=255)
+    birthday = models.DateField()
+    gender = models.CharField(max_length=10, choices=[("Male", "Male"), ("Female", "Female")])
+    diagnosis = models.TextField()
+
+    def __str__(self):
+        return f"{self.full_name} (Child of {self.parent.full_name})"

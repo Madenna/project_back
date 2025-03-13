@@ -599,9 +599,9 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
-    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, EditProfileSerializer
+    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, EditProfileSerializer, ChildSerializer
 )
-from .models import OTPVerification, Profile
+from .models import OTPVerification, Profile, Child
 from .utils import send_verification_email, generate_otp
 # Get the custom User model
 User = get_user_model()
@@ -785,3 +785,14 @@ class ResendEmailOTPView(APIView):
         send_verification_email(user.email, otp_verification.otp_code)
 
         return Response({"message": "New OTP sent to email"}, status=status.HTTP_200_OK)
+
+class AddChildView(generics.CreateAPIView):
+    serializer_class = ChildSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """
+        ✅ Automatically assign the current user as the parent.
+        ✅ No need for `child_id` in API request.
+        """
+        serializer.save(parent=self.request.user)

@@ -213,15 +213,3 @@ class SMSC(object):
 			ret = "," # фиктивный ответ
 
 		return ret.split(",")
-
-
-# Examples:
-# smsc = SMSC()
-# smsc.send_sms("79999999999", "test", sender="sms")
-# smsc.send_sms("79999999999", "http://smsc.kz\nSMSC.KZ", query="maxsms=3")
-# smsc.send_sms("79999999999", "0605040B8423F0DC0601AE02056A0045C60C036D79736974652E72750001036D7973697465000101", format=5)
-# smsc.send_sms("79999999999", "", format=3)
-# r = smsc.get_sms_cost("79999999999", "Вы успешно зарегистрированы!")
-# smsc.send_sms_mail("79999999999", "test2", format=1)
-# r = smsc.get_status(12345, "79999999999")
-# print(smsc.get_balance())
