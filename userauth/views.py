@@ -622,21 +622,27 @@ class RegisterView(APIView):
 
     @swagger_auto_schema(request_body=RegisterSerializer)
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            user.set_password(user.password)  # Hash password before saving
-            user.is_active = False  # User must verify email first
-            user.save()
+        try:
+            serializer = RegisterSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+                user.set_password(user.password)  # Hash password before saving
+                user.is_active = False  # User must verify email first
+                user.save()
 
-            # Generate OTP and send verification email
-            otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
-            otp_verification.generate_otp()
-            send_verification_email(user.email, otp_verification.otp_code)
+                # Generate OTP and send verification email
+                otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
+                otp_verification.generate_otp()
+                send_verification_email(user.email, otp_verification.otp_code)
 
-            return Response({"message": "OTP sent to email"}, status=status.HTTP_201_CREATED)
+                return Response({"message": "OTP sent to email"}, status=status.HTTP_201_CREATED)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"🚨 ERROR: {str(e)}")  # Log error in console
+            return Response({"error": "Something went wrong on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 
 ### ✅ Login User ###
