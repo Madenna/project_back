@@ -32,6 +32,6 @@ urlpatterns = [
 
     path('protected/', ProtectedView.as_view(), name='protected'),  # ✅ Protected route
     path('profile/', ProfileView.as_view(), name='profile'),  # ✅ User Profile
-
+    path("edit-profile/", ProfileView.as_view(), name="edit_profile"),  # ✅ Edit Profile
     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),  # ✅ Reset Password
 ]

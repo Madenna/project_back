@@ -179,8 +179,8 @@ from django.conf import settings
 
 #     return otp_code  # Return OTP for debugging (remove this in production)
 def send_verification_email(email, otp_code):
-    subject = "Your Verification Code"
-    message = f"Your OTP code is: {otp_code}. It is valid for 10 minutes."
+    subject = "Balasteps: Your Verification Code"
+    message = f"Your Balasteps OTP code is: {otp_code}. It is valid for 10 minutes."
     sender_email = settings.DEFAULT_FROM_EMAIL
 
     try:

@@ -599,7 +599,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
-    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer
+    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, EditProfileSerializer
 )
 from .models import OTPVerification, Profile
 from .utils import send_verification_email, generate_otp
