@@ -182,16 +182,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Ensure password is hashed before saving"""
-        user = User(
-            email=validated_data['email'],
-            full_name=validated_data['full_name']
-        )
-        user.set_password(validated_data['password'])  # Hash password
-        user.is_active = False  # Require email verification
-        user.save()
+        # user = User(
+        #     email=validated_data['email'],
+        #     full_name=validated_data['full_name']
+        # )
+        # user.set_password(validated_data['password'])  # Hash password
+        # user.is_active = False  # Require email verification
+        # user.save()
         
-        # Create an empty profile for the user
-        Profile.objects.create(user=user)
+        # # Create an empty profile for the user
+        # Profile.objects.create(user=user)
+        user = User.objects.create_user(**validated_data)
+        
+        # ✅ Only create a profile if it does not exist
+        Profile.objects.get_or_create(user=user)  
+
 
         return user
 

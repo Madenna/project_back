@@ -248,7 +248,7 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "210107028@stu.sdu.edu.kz" # Use env variable
-EMAIL_HOST_PASSWORD = "EMAIL_HOST_PASSWORD", "aegd rget ealm ooan"  # App Password
+EMAIL_HOST_PASSWORD = "aegd rget ealm ooan"  # App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Ensure it's correctly set
 
 # ✅ CORS SETTINGS (Allow frontend to connect)
