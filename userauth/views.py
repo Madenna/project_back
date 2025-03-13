@@ -601,7 +601,7 @@ from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
     PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, EditProfileSerializer, ChildSerializer
 )
-from .models import OTPVerification, Profile, Child
+from .models import OTPVerification, Profile, Child, Diagnosis
 from .utils import send_verification_email, generate_otp
 # Get the custom User model
 User = get_user_model()
@@ -793,6 +793,27 @@ class AddChildView(generics.CreateAPIView):
     def perform_create(self, serializer):
         """
         ✅ Automatically assign the current user as the parent.
-        ✅ No need for `child_id` in API request.
+        ✅ Ensure only valid diagnoses are assigned.
         """
-        serializer.save(parent=self.request.user)
+        diagnoses_data = self.request.data.get("diagnoses", [])  # Extract diagnoses from request
+
+        # Ensure diagnoses exist
+        valid_diagnoses = Diagnosis.objects.filter(id__in=diagnoses_data)
+        child = serializer.save(parent=self.request.user)
+
+        # Assign diagnoses (if any)
+        child.diagnoses.set(valid_diagnoses)
+
+class EditChildView(generics.RetrieveUpdateAPIView):
+    """
+    ✅ Allows parents to retrieve and update their child's information.
+    ✅ Supports GET (retrieve), PUT (full update), and PATCH (partial update).
+    ✅ Ensures that users can only edit their own children.
+    """
+    serializer_class = ChildSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id" 
+
+    def get_queryset(self):
+        """✅ Ensure users can only access their own children"""
+        return Child.objects.filter(parent=self.request.user)
