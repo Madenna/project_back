@@ -363,7 +363,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='user.full_name', required=False)
     email = serializers.CharField(source='user.email', required=False)
-    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    profile_photo = serializers.ImageField(required=False, allow_null=True, use_url=True)
     additional_info = serializers.CharField(required=False, allow_null=True)
     city = serializers.CharField(required=False, allow_null=True)
 
