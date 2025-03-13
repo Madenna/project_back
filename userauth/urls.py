@@ -1,16 +1,37 @@
+# from django.urls import path
+# from .views import RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, PasswordResetView, VerifyNewPhoneNumberView, RequestPhoneNumberChangeView, VerifyOTPView
+# from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+# urlpatterns = [
+#     path('register/', RegisterView.as_view(), name='register'),
+#     path('login/',  LoginView.as_view(), name='login'),  # custom Login
+#     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+#     path('logout/', LogoutView.as_view(), name='logout'), 
+#     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Refresh Token
+#     path('protected/', ProtectedView.as_view(), name='protected'),  # New protected route
+#     path('profile/', ProfileView.as_view(), name='profile'),
+#     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),
+#     path('request-phone-change/', RequestPhoneNumberChangeView.as_view(), name='request_phone_change'),
+#     path('verify-new-phone/', VerifyNewPhoneNumberView.as_view(), name='verify_new_phone')
+# ]
 from django.urls import path
-from .views import RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, PasswordResetView, VerifyNewPhoneNumberView, RequestPhoneNumberChangeView, VerifyOTPView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import (
+    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, 
+    PasswordResetView, VerifyOTPView, ResendEmailOTPView
+)
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
-    path('login/',  LoginView.as_view(), name='login'),  # custom Login
-    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
-    path('logout/', LogoutView.as_view(), name='logout'), 
-    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Refresh Token
-    path('protected/', ProtectedView.as_view(), name='protected'),  # New protected route
-    path('profile/', ProfileView.as_view(), name='profile'),
-    path('reset-password/', PasswordResetView.as_view(), name='reset_password'),
-    path('request-phone-change/', RequestPhoneNumberChangeView.as_view(), name='request_phone_change'),
-    path('verify-new-phone/', VerifyNewPhoneNumberView.as_view(), name='verify_new_phone')
+    path('register/', RegisterView.as_view(), name='register'),  # ✅ Register
+    path('login/', LoginView.as_view(), name='login'),  # ✅ Custom Login
+    path('logout/', LogoutView.as_view(), name='logout'),  # ✅ Logout
+    path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # ✅ Refresh JWT Token
+
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),  # ✅ Verify Email OTP
+    path('resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),  # ✅ Resend Email OTP
+
+    path('protected/', ProtectedView.as_view(), name='protected'),  # ✅ Protected route
+    path('profile/', ProfileView.as_view(), name='profile'),  # ✅ User Profile
+
+    path('reset-password/', PasswordResetView.as_view(), name='reset_password'),  # ✅ Reset Password
 ]

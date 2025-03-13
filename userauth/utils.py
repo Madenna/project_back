@@ -6,6 +6,7 @@ import random
 from .models import User, OTPVerification
 import json
 import urllib.parse
+from django.core.mail import send_mail
 
 def create_firebase_id_token(phone_number):
     try:
@@ -149,18 +150,41 @@ from django.conf import settings
 
 def send_otp_smsc(phone_number, otp_code):
     smsc = SMSC()
-
     message = f"Your Balasteps OTP is {otp_code}"
-    sender = settings.SMSC_SENDER  # Optional sender ID from settings
+    response = smsc.send_sms(phone_number, message, sender=SMSC_SENDER)
+    print("SMSC Response:", response)  # Log response for debugging
 
-    # Send SMS using the SMSC library
-    response = smsc.send_sms(phone_number, message, sender=sender)
-
-    # Check if the response has an error
-    if int(response[1]) < 0:
-        print(f"Failed to send OTP: Error code {response[1]}")
+    if response[1].startswith("-"):
+        print(f"SMSC Error: {response}")
         return None
 
-    print(f"OTP Sent to: {phone_number}")
-    print(f"Generated OTP: {otp_code}")
     return otp_code
+
+# def send_otp_email(email):
+#     """Generate OTP and send it via email."""
+#     otp_code = str(random.randint(100000, 999999))
+
+#     # Store OTP in the database
+#     user = User.objects.get(email=email)
+#     otp_verification, created = OTPVerification.objects.get_or_create(user=user)
+#     otp_verification.otp_code = otp_code
+#     otp_verification.save()
+
+#     # Send email
+#     subject = "Your BalaSteps Email OTP"
+#     message = f"Your OTP for BalaSteps verification is: {otp_code}"
+#     from_email = settings.DEFAULT_FROM_EMAIL
+
+#     send_mail(subject, message, from_email, [email])
+
+#     return otp_code  # Return OTP for debugging (remove this in production)
+
+def send_email_otp(email, otp_code):
+    subject = "Your Verification Code"
+    message = f"Your OTP code is: {otp_code}. It is valid for 10 minutes."
+    
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        print(f"Sent OTP: {otp_code} to {email}")
+    except Exception as e:
+        print(f"Email sending failed: {e}")
