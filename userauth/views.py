@@ -602,8 +602,7 @@ from .serializers import (
     PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer
 )
 from .models import OTPVerification, Profile
-from .utils import send_verification_email
-
+from .utils import send_verification_email, generate_otp
 # Get the custom User model
 User = get_user_model()
 

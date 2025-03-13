@@ -178,13 +178,17 @@ def send_otp_smsc(phone_number, otp_code):
 #     send_mail(subject, message, from_email, [email])
 
 #     return otp_code  # Return OTP for debugging (remove this in production)
-
-def send_email_otp(email, otp_code):
+def send_verification_email(email, otp_code):
     subject = "Your Verification Code"
     message = f"Your OTP code is: {otp_code}. It is valid for 10 minutes."
-    
+    sender_email = settings.DEFAULT_FROM_EMAIL
+
     try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        send_mail(subject, message, sender_email, [email])
         print(f"Sent OTP: {otp_code} to {email}")
     except Exception as e:
         print(f"Email sending failed: {e}")
+
+### ✅ Generate OTP Code ###
+def generate_otp():
+    return str(random.randint(100000, 999999))

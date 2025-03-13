@@ -339,4 +339,45 @@ class VerifyNewEmailSerializer(serializers.Serializer):
 
         except OTPVerification.DoesNotExist:
             raise serializers.ValidationError("Invalid OTP or email.")
+### ✅ User Serializer ###
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'full_name', 'password', 'is_active']
+        extra_kwargs = {'password': {'write_only': True}}
 
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            full_name=validated_data['full_name'],
+            password=validated_data['password']
+        )
+        return user
+    
+### ✅ Profile Serializer ###
+class ProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='user.full_name', required=False)
+    email = serializers.CharField(source='user.email', required=False)
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    additional_info = serializers.CharField(required=False, allow_null=True)
+    city = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = Profile
+        fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+
+        # Update User model
+        user = instance.user
+        user.full_name = user_data.get('full_name', user.full_name)
+        user.save()
+
+        # Update Profile model
+        instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
+        instance.additional_info = validated_data.get('additional_info', instance.additional_info)
+        instance.city = validated_data.get('city', instance.city)
+        instance.save()
+
+        return instance
