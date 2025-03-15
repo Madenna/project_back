@@ -717,9 +717,67 @@ class VerifyOTPView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class RequestPasswordResetView(APIView):
+    """
+    ✅ Generates a new OTP and sends it to the user's email.
+    """
+    @swagger_auto_schema(request_body=serializers.Serializer)
+    def post(self, request):
+        email = request.data.get("email")
+
+        try:
+            user = User.objects.get(email=email)
+
+            if not user.is_active:
+                return Response({"error": "User is not verified."}, status=status.HTTP_403_FORBIDDEN)
+
+            # ✅ Generate and send a new OTP
+            otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
+            otp_verification.generate_otp()
+            send_verification_email(user.email, otp_verification.otp_code)
+
+            return Response({"message": "OTP sent to your email."}, status=status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+class VerifyPasswordResetOTPView(APIView):
+    """
+    ✅ Verifies the OTP before allowing password reset.
+    """
+    serializer_class = OTPVerificationSerializer
+
+    @swagger_auto_schema(request_body=OTPVerificationSerializer)
+    def post(self, request):
+        serializer = OTPVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            user_otp = serializer.validated_data["otp"]
+
+            try:
+                user = User.objects.get(email=email)
+                otp_verification = OTPVerification.objects.get(user=user)
+
+                # ✅ Check if OTP is expired
+                if otp_verification.is_expired():
+                    otp_verification.delete()
+                    return Response({"error": "OTP expired, request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+                # ✅ Check if OTP matches
+                if otp_verification.otp_code == user_otp:
+                    return Response({"message": "OTP verified successfully. You can now reset your password."}, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+            except (User.DoesNotExist, OTPVerification.DoesNotExist):
+                return Response({"error": "Invalid request. Please request a password reset again."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 ### ✅ Password Reset with Email OTP ###
 class PasswordResetView(APIView):
+    """
+    ✅ Allows the user to reset their password after verifying OTP.
+    """
     serializer_class = PasswordResetSerializer
 
     @swagger_auto_schema(request_body=PasswordResetSerializer)
@@ -731,24 +789,27 @@ class PasswordResetView(APIView):
 
             try:
                 user = User.objects.get(email=email)
-                
-                # Ensure OTP verification before resetting password
+
+                # ✅ Check if user has already verified OTP
                 otp_verification = OTPVerification.objects.get(user=user)
                 if otp_verification.is_expired():
                     otp_verification.delete()
                     return Response({"error": "OTP expired, request a new one."}, status=status.HTTP_400_BAD_REQUEST)
 
+                # ✅ Set new password and delete OTP record
                 user.set_password(new_password)
                 user.save()
                 otp_verification.delete()
 
-                return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+                return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
+
             except User.DoesNotExist:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
             except OTPVerification.DoesNotExist:
-                return Response({"error": "OTP not found, please verify your email first."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "OTP verification required before resetting password."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 from rest_framework import parsers
 ### ✅ User Profile Management ###
