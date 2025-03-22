@@ -193,6 +193,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         # # Create an empty profile for the user
         # Profile.objects.create(user=user)
         user = User.objects.create_user(**validated_data)
+        user.is_active = False  # ✅ Require email verification
+        user.save()
         
         # ✅ Only create a profile if it does not exist
         Profile.objects.get_or_create(user=user)  

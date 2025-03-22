@@ -656,17 +656,34 @@ class LoginView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data["email"]
             password = serializer.validated_data["password"]
-            user = get_object_or_404(User, email=email)
+            #user = get_object_or_404(User, email=email)
+            user = User.objects.filter(email=email).first()
+            if not user:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            if not user.check_password(password):
+                return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            if user.check_password(password):
-                if user.is_active:
-                    refresh = RefreshToken.for_user(user)
-                    return Response({"refresh": str(refresh), "access": str(refresh.access_token)})
-                else:
-                    return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
-            return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            if not user.is_active:
+                return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token)
+            })
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            
+        #     if user.check_password(password):
+        #         if user.is_active:
+        #             refresh = RefreshToken.for_user(user)
+        #             return Response({"refresh": str(refresh), "access": str(refresh.access_token)})
+        #         else:
+        #             return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
+        #     return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 ### ✅ Logout User ###
