@@ -145,7 +145,7 @@ import os
 from pathlib import Path
 import warnings
 from datetime import timedelta
-from decouple import config
+#from decouple import config
 
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
 
@@ -161,10 +161,10 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # ✅ SECRET KEY & SECURITY SETTINGS
-SECRET_KEY = config("SECRET_KEY")
-
-DEBUG = config("DEBUG", default=False, cast=bool)
-
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
+if not SECRET_KEY:
+    raise Exception("❌ DJANGO_SECRET_KEY is not set in environment variables!")
+DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = ["*"]  # ❗ Consider restricting this in production
 
 # ✅ INSTALLED APPS
@@ -218,17 +218,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "myproject.wsgi.application"
 
-# ✅ DATABASE CONFIGURATION (Use PostgreSQL in production)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+# # ✅ DATABASE CONFIGURATION (Use PostgreSQL in production)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST'),
+#         'PORT': os.getenv('DB_PORT', '5432'),
+#     }
+# }
+import dj_database_url
+
+USE_SQLITE = os.getenv("USE_SQLITE", "True") == "True"
+
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": dj_database_url.config(conn_max_age=600, ssl_require=True)
+    }
 
 # ✅ PASSWORD VALIDATION
 AUTH_PASSWORD_VALIDATORS = [
