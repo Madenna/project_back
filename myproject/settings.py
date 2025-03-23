@@ -140,11 +140,12 @@
 # DEFAULT_FROM_EMAIL = "210107028@stu.sdu.edu.kz"
 
 import os
-import firebase_admin
-from firebase_admin import credentials
+#import firebase_admin
+#from firebase_admin import credentials
 from pathlib import Path
 import warnings
 from datetime import timedelta
+from decouple import config
 
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
 
@@ -160,9 +161,9 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # ✅ SECRET KEY & SECURITY SETTINGS
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-1g*jr$do6pkm5f^v)!r7j^rmq+7%8o9mdc$2@c3zw@v+w^!cb3")
+SECRET_KEY = config("SECRET_KEY")
 
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 ALLOWED_HOSTS = ["*"]  # ❗ Consider restricting this in production
 
@@ -248,8 +249,8 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "210107028@stu.sdu.edu.kz" # Use env variable
-EMAIL_HOST_PASSWORD = "aegd rget ealm ooan"  # App Password
+EMAIL_HOST_USER = config("EMAIL_HOST_USER") # Use env variable
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")  # App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Ensure it's correctly set
 
 # ✅ CORS SETTINGS (Allow frontend to connect)
