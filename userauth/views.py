@@ -627,7 +627,7 @@ class RegisterView(APIView):
             serializer = RegisterSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
-                user.set_password(user.password)  # Hash password before saving
+                # user.set_password(user.password)  # Hash password before saving
                 user.is_active = False  # User must verify email first
                 user.save()
 

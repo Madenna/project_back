@@ -105,7 +105,7 @@
 #     "http://localhost:3000",  # React Localhost
 # ]
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 # REST_FRAMEWORK = {
 #     'DEFAULT_AUTHENTICATION_CLASSES': (
 #         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -197,6 +197,7 @@ MIDDLEWARE = [
 
 # ✅ URL CONFIGURATION
 ROOT_URLCONF = "myproject.urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TEMPLATES = [
     {
@@ -262,6 +263,16 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+}
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
+            'description': 'JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"'
+        }
+    }
 }
 
 # ✅ JWT SETTINGS

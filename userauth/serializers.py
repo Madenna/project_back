@@ -266,26 +266,26 @@ class EmailVerificationSerializer(serializers.Serializer):
         except OTPVerification.DoesNotExist:
             raise serializers.ValidationError("Invalid OTP or email.")
 
-# -------------------------------
-# ✅ PROFILE SERIALIZER (VIEW PROFILE)
-# -------------------------------
-class ProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='user.full_name', required=False)
-    email = serializers.EmailField(source='user.email', required=False)
-    profile_photo = serializers.ImageField(required=False, allow_null=True)
-    additional_info = serializers.CharField(required=False, allow_null=True)
-    city = serializers.CharField(required=False, allow_null=True)
+# # -------------------------------
+# # ✅ PROFILE SERIALIZER (VIEW PROFILE)
+# # -------------------------------
+# class ProfileSerializer(serializers.ModelSerializer):
+#     full_name = serializers.CharField(source='user.full_name', required=False)
+#     email = serializers.EmailField(source='user.email', required=False)
+#     profile_photo = serializers.ImageField(required=False, allow_null=True)
+#     additional_info = serializers.CharField(required=False, allow_null=True)
+#     city = serializers.CharField(required=False, allow_null=True)
 
-    class Meta:
-        model = Profile
-        fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+#     class Meta:
+#         model = Profile
+#         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
     
-    def to_representation(self, instance):
-        """Set a default profile image if none is uploaded"""
-        rep = super().to_representation(instance)
-        if not rep['profile_photo']:
-            rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
-        return rep
+#     def to_representation(self, instance):
+#         """Set a default profile image if none is uploaded"""
+#         rep = super().to_representation(instance)
+#         if not rep['profile_photo']:
+#             rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+#         return rep
 
 # -------------------------------
 # ✅ EDIT PROFILE SERIALIZER
@@ -372,6 +372,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+    
+    def to_representation(self, instance):
+        """Set a default profile image if none is uploaded"""
+        rep = super().to_representation(instance)
+        if not rep['profile_photo']:
+            rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+        return rep
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})

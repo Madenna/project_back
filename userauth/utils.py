@@ -1,11 +1,11 @@
 from django.conf import settings
-import firebase_admin
-from firebase_admin import auth
-import requests
+#import firebase_admin
+#from firebase_admin import auth
+#import requests
 import random
-from .models import User, OTPVerification
-import json
-import urllib.parse
+#from .models import User, OTPVerification
+#import json
+#import urllib.parse
 from django.core.mail import send_mail
 
 # def create_firebase_id_token(phone_number):
