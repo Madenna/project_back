@@ -146,6 +146,9 @@ from pathlib import Path
 import warnings
 from datetime import timedelta
 #from decouple import config
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
 
@@ -304,10 +307,10 @@ SIMPLE_JWT = {
 # ✅ AUTHENTICATION BACKENDS
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = 'storages.backends.cloudinary.CloudinaryStorage'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv("CLOUDINARY_CLOUD_NAME"),
-    'API_KEY': os.getenv("CLOUDINARY_API_KEY"),
-    'API_SECRET': os.getenv("CLOUDINARY_API_SECRET"),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
