@@ -185,7 +185,6 @@ INSTALLED_APPS = [
     "userauth",
     "drf_yasg",
     "cloudinary",
-    "cloudinary_storage",
     "information",
 ]
 
