@@ -16,7 +16,7 @@
 # ]
 from django.urls import path
 from .views import (
-    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView,
+    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, ListChildrenView,
     PasswordResetView, VerifyOTPView, ResendEmailOTPView, AddChildView, EditChildView, RequestPasswordResetView, VerifyPasswordResetOTPView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -37,5 +37,6 @@ urlpatterns = [
     path('verify-password-reset-otp/', VerifyPasswordResetOTPView.as_view(), name='verify_password_reset_otp'),  # ✅ Step 2: Verify OTP
     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),  # ✅ Step 3: Set new password
     path('add-child/', AddChildView.as_view(), name='add_child'), # ✅ API to Add Child
+    path('children/', ListChildrenView.as_view(), name='list_children'),
     path('edit-child/<uuid:pk>/', EditChildView.as_view(), name='edit_child'),  # ✅ Edit Child
 ]

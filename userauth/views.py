@@ -885,6 +885,13 @@ class AddChildView(generics.CreateAPIView):
     def get_serializer_context(self):
         return {"request": self.request}
 
+class ListChildrenView(generics.ListAPIView):
+    serializer_class = ChildSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Child.objects.filter(parent=self.request.user)
+
 class EditChildView(generics.RetrieveUpdateAPIView):
     """
     ✅ Allows parents to retrieve and update their child's information.
