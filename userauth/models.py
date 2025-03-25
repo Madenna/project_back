@@ -206,4 +206,3 @@ class Child(models.Model):
 
     def __str__(self):
         return f"{self.full_name} (Child of {self.parent.full_name})"
-

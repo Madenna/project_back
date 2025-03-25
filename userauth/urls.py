@@ -16,7 +16,7 @@
 # ]
 from django.urls import path
 from .views import (
-    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, 
+    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView,
     PasswordResetView, VerifyOTPView, ResendEmailOTPView, AddChildView, EditChildView, RequestPasswordResetView, VerifyPasswordResetOTPView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
