@@ -600,7 +600,7 @@ from rest_framework import serializers
 
 from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
-    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, EditProfileSerializer, ChildSerializer
+    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, ChildSerializer
 )
 from .models import OTPVerification, Profile, Child, Diagnosis
 from .utils import send_verification_email, generate_otp
@@ -832,6 +832,7 @@ class PasswordResetView(APIView):
 from rest_framework import parsers
 import logging
 logger = logging.getLogger(__name__)
+from .utils import upload_to_cloudinary
 ### ✅ User Profile Management ###
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
@@ -844,9 +845,23 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return profile
 
+    # def update(self, request, *args, **kwargs):
+    #     profile = self.get_object()
+    #     serializer = self.get_serializer(profile, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
     def update(self, request, *args, **kwargs):
         profile = self.get_object()
-        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        data = request.data.copy()
+
+        # ✅ Handle file upload if present
+        if 'profile_photo' in request.FILES:
+            uploaded_file = request.FILES['profile_photo']
+            photo_url = upload_to_cloudinary(uploaded_file)
+            data['profile_photo'] = photo_url
+
+        serializer = self.get_serializer(profile, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

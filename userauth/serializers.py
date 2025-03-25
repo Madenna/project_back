@@ -291,46 +291,46 @@ class EmailVerificationSerializer(serializers.Serializer):
 # -------------------------------
 # ✅ EDIT PROFILE SERIALIZER
 # -------------------------------
-class EditProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='user.full_name', required=False)
-    email = serializers.EmailField(source='user.email', required=False)
-    profile_photo = serializers.ImageField(required=False, allow_null=True)
-    additional_info = serializers.CharField(required=False, allow_null=True)
-    city = serializers.CharField(required=False, allow_null=True)
+# class EditProfileSerializer(serializers.ModelSerializer):
+#     full_name = serializers.CharField(source='user.full_name', required=False)
+#     email = serializers.EmailField(source='user.email', required=False)
+#     profile_photo = serializers.URLField(required=False, allow_null=True)
+#     additional_info = serializers.CharField(required=False, allow_null=True)
+#     city = serializers.CharField(required=False, allow_null=True)
 
-    class Meta:
-        model = Profile
-        fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+#     class Meta:
+#         model = Profile
+#         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
     
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        if not rep['profile_photo']:
-            rep['profile_photo'] = '/media/profile_photos/default.jpg'
-        return rep
+#     def to_representation(self, instance):
+#         rep = super().to_representation(instance)
+#         if not rep['profile_photo']:
+#             rep['profile_photo'] = '/media/profile_photos/default.jpg'
+#         return rep
 
-    def update(self, instance, validated_data):
-        """Update both user and profile information"""
-        user_data = validated_data.pop('user', {})
+#     def update(self, instance, validated_data):
+#         """Update both user and profile information"""
+#         user_data = validated_data.pop('user', {})
         
-        user = instance.user
-        user.full_name = user_data.get('full_name', user.full_name)
+#         user = instance.user
+#         user.full_name = user_data.get('full_name', user.full_name)
 
-        # Handle email change separately
-        new_email = user_data.get('email')
-        if new_email and new_email != user.email:
-            user.temp_email = new_email  # Store the new email temporarily
-            user.save()
-            return {"message": "Verification email sent to new email address."}
+#         # Handle email change separately
+#         new_email = user_data.get('email')
+#         if new_email and new_email != user.email:
+#             user.temp_email = new_email  # Store the new email temporarily
+#             user.save()
+#             return {"message": "Verification email sent to new email address."}
 
-        user.save()
+#         user.save()
 
-        # Update Profile model fields
-        instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
-        instance.additional_info = validated_data.get('additional_info', instance.additional_info)
-        instance.city = validated_data.get('city', instance.city)
-        instance.save()
+#         # Update Profile model fields
+#         instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
+#         instance.additional_info = validated_data.get('additional_info', instance.additional_info)
+#         instance.city = validated_data.get('city', instance.city)
+#         instance.save()
 
-        return instance
+#         return instance
 
 # -------------------------------
 # ✅ VERIFY NEW EMAIL SERIALIZER
@@ -369,39 +369,77 @@ class UserSerializer(serializers.ModelSerializer):
         return user
     
 ### ✅ Profile Serializer ###
+# class ProfileSerializer(serializers.ModelSerializer):
+#     full_name = serializers.CharField(source='user.full_name', required=False)
+#     email = serializers.CharField(source='user.email', required=False)
+#     profile_photo = serializers.URLField(required=False, allow_null=True)
+#     additional_info = serializers.CharField(required=False, allow_null=True)
+#     city = serializers.CharField(required=False, allow_null=True)
+
+#     class Meta:
+#         model = Profile
+#         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+    
+#     # def to_representation(self, instance):
+#     #     """Set a default profile image if none is uploaded"""
+#     #     rep = super().to_representation(instance)
+#     #     if not rep.get('profile_photo'):
+#     #         rep['profile_photo'] = settings.DEFAULT_PROFILE_PHOTO
+#     #     return rep
+#     def to_representation(self, instance):
+#         rep = super().to_representation(instance)
+#         return rep
+
+#     def update(self, instance, validated_data):
+#         user_data = validated_data.pop('user', {})
+
+#         # Update User model
+#         user = instance.user
+#         user.full_name = user_data.get('full_name', user.full_name)
+#         user.save()
+
+#         # Update Profile model
+#         instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
+#         instance.additional_info = validated_data.get('additional_info', instance.additional_info)
+#         instance.city = validated_data.get('city', instance.city)
+#         instance.save()
+
+#         return instance
 class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='user.full_name', required=False)
-    email = serializers.CharField(source='user.email', required=False)
-    profile_photo = serializers.ImageField(required=False, allow_null=True, use_url=True)
+    email = serializers.EmailField(source='user.email', required=False)
+    profile_photo = serializers.URLField(required=False, allow_null=True)
     additional_info = serializers.CharField(required=False, allow_null=True)
     city = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = Profile
         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
-    
+
     def to_representation(self, instance):
-        """Set a default profile image if none is uploaded"""
         rep = super().to_representation(instance)
-        if not rep.get('profile_photo'):
-            rep['profile_photo'] = settings.DEFAULT_PROFILE_PHOTO
         return rep
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
 
-        # Update User model
+        # ✅ Update User model
         user = instance.user
         user.full_name = user_data.get('full_name', user.full_name)
+
+        new_email = user_data.get('email')
+        if new_email and new_email != user.email:
+            user.temp_email = new_email  # you can trigger OTP verification if needed
         user.save()
 
-        # Update Profile model
-        instance.profile_photo = validated_data.get('profile_photo', instance.profile_photo)
-        instance.additional_info = validated_data.get('additional_info', instance.additional_info)
-        instance.city = validated_data.get('city', instance.city)
+        # ✅ Update Profile fields
+        for field in ['profile_photo', 'additional_info', 'city']:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
         instance.save()
 
         return instance
+
 
 class DiagnosisSerializer(serializers.ModelSerializer):
     class Meta:

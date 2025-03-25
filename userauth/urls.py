@@ -32,7 +32,7 @@ urlpatterns = [
 
     path('protected/', ProtectedView.as_view(), name='protected'),  # ✅ Protected route
     path('profile/', ProfileView.as_view(), name='profile'),  # ✅ User Profile
-    path("edit-profile/", ProfileView.as_view(), name="edit_profile"),  # ✅ Edit Profile
+    #path("edit-profile/", ProfileView.as_view(), name="edit_profile"),  # ✅ Edit Profile
     path('request-password-reset/', RequestPasswordResetView.as_view(), name='request_password_reset'),  # ✅ Step 1: Request OTP
     path('verify-password-reset-otp/', VerifyPasswordResetOTPView.as_view(), name='verify_password_reset_otp'),  # ✅ Step 2: Verify OTP
     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),  # ✅ Step 3: Set new password

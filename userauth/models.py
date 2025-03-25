@@ -161,7 +161,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
-    profile_photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True, default="profile_photos/default.jpg")
+    profile_photo = models.URLField(blank=True, null=True)
     city = models.CharField(max_length=100, blank=True, null=True)
     additional_info = models.TextField(max_length=1000, blank=True, null=True)
 
