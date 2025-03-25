@@ -170,6 +170,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import User, Profile, OTPVerification, Child, Diagnosis
+from django.conf import settings
 
 # -------------------------------
 # ✅ REGISTER SERIALIZER
@@ -383,7 +384,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         """Set a default profile image if none is uploaded"""
         rep = super().to_representation(instance)
         if not rep['profile_photo']:
-            rep['profile_photo'] = '/media/profile_photos/default.jpg'  # Default image path
+            rep['profile_photo'] = settings.DEFAULT_PROFILE_PHOTO
         return rep
 
     def update(self, instance, validated_data):

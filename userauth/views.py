@@ -834,24 +834,19 @@ from rest_framework import parsers
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser] 
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
     def get_object(self):
-        return self.request.user.profile
+        # Auto-create profile if not found
+        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        return profile
 
     def update(self, request, *args, **kwargs):
-        user = request.user
-        serializer = self.get_serializer(data=request.data, partial=True)
-
-        if serializer.is_valid():
-            profile = self.get_object()
-            serializer = self.get_serializer(profile, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        profile = self.get_object()
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 ### ✅ Resend Email Verification OTP ###
 class ResendEmailOTPView(APIView):
