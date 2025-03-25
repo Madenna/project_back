@@ -830,6 +830,8 @@ class PasswordResetView(APIView):
 
 
 from rest_framework import parsers
+import logging
+logger = logging.getLogger(__name__)
 ### ✅ User Profile Management ###
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
@@ -837,6 +839,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
     def get_object(self):
+        logger.warning(f"Current user: {self.request.user}, is_authenticated: {self.request.user.is_authenticated}")
         # Auto-create profile if not found
         profile, created = Profile.objects.get_or_create(user=self.request.user)
         return profile

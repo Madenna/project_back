@@ -383,7 +383,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Set a default profile image if none is uploaded"""
         rep = super().to_representation(instance)
-        if not rep['profile_photo']:
+        if not rep.get('profile_photo'):
             rep['profile_photo'] = settings.DEFAULT_PROFILE_PHOTO
         return rep
 
