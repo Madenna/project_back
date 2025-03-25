@@ -300,6 +300,12 @@ class EditProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['full_name', 'email', 'profile_photo', 'additional_info', 'city']
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if not rep['profile_photo']:
+            rep['profile_photo'] = '/media/profile_photos/default.jpg'
+        return rep
 
     def update(self, instance, validated_data):
         """Update both user and profile information"""
@@ -402,51 +408,100 @@ class DiagnosisSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
         read_only_fields = ['id'] 
 
+# class ChildSerializer(serializers.ModelSerializer):
+#     diagnoses = DiagnosisSerializer(many=True)  # ✅ Allowing nested input
+
+#     class Meta:
+#         model = Child
+#         fields = ["id", "full_name", "birthday", "gender", "diagnoses"]
+#         read_only_fields = ['id', 'parent']  
+
+#     def create(self, validated_data):
+#         """
+#         ✅ Automatically assigns `parent` (current user) when adding a child.
+#         ✅ Ensures diagnoses are created or linked correctly.
+#         """
+#         request = self.context.get("request")
+#         if not request:
+#             raise serializers.ValidationError("Request context is required.")
+        
+#         validated_data["parent"] = request.user  # ✅ Assign parent automatically
+
+#         # Handle multiple diagnoses
+#         diagnoses_data = validated_data.pop('diagnoses', [])
+#         child = Child.objects.create(**validated_data)
+
+#         for diagnosis in diagnoses_data:
+#             diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=diagnosis['name'])  
+#             child.diagnoses.add(diagnosis_obj)  # ✅ Add to ManyToMany field
+
+#         return child
+    
+#     def update(self, instance, validated_data):
+#         """
+#         ✅ Allows updating child details while keeping `parent` unchanged.
+#         ✅ Properly updates diagnoses.
+#         """
+#         diagnoses_data = validated_data.pop('diagnoses', None)
+#         if diagnoses_data is not None:
+#             # Only update diagnoses if they are included in the request
+#             existing_diagnoses = {diag.name: diag for diag in instance.diagnoses.all()}  
+
+#             for diagnosis in diagnoses_data:
+#                 diagnosis_name = diagnosis['name']
+#                 if diagnosis_name not in existing_diagnoses:
+#                     diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=diagnosis_name)
+#                     instance.diagnoses.add(diagnosis_obj)
+
+#         # ✅ Update other child fields
+#         instance.full_name = validated_data.get('full_name', instance.full_name)
+#         instance.birthday = validated_data.get('birthday', instance.birthday)
+#         instance.gender = validated_data.get('gender', instance.gender)
+#         instance.save()
+#         return instance
+
 class ChildSerializer(serializers.ModelSerializer):
-    diagnoses = DiagnosisSerializer(many=True)  # ✅ Allowing nested input
+    diagnoses = DiagnosisSerializer(many=True)
 
     class Meta:
         model = Child
         fields = ["id", "full_name", "birthday", "gender", "diagnoses"]
-        read_only_fields = ['id', 'parent']  
+        read_only_fields = ['id', 'parent']
 
     def create(self, validated_data):
-        """
-        ✅ Automatically assigns `parent` (current user) when adding a child.
-        ✅ Ensures diagnoses are created or linked correctly.
-        """
         request = self.context.get("request")
-        validated_data["parent"] = request.user  # ✅ Assign parent automatically
+        if not request:
+            raise serializers.ValidationError("Request context is required.")
 
-        # Handle multiple diagnoses
         diagnoses_data = validated_data.pop('diagnoses', [])
+        validated_data["parent"] = request.user
+
         child = Child.objects.create(**validated_data)
 
         for diagnosis in diagnoses_data:
-            diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=diagnosis['name'])  
-            child.diagnoses.add(diagnosis_obj)  # ✅ Add to ManyToMany field
+            name = diagnosis.get('name')
+            if not name:
+                raise serializers.ValidationError("Each diagnosis must have a 'name'.")
+            diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=name.strip())
+            child.diagnoses.add(diagnosis_obj)
 
         return child
-    
+
     def update(self, instance, validated_data):
-        """
-        ✅ Allows updating child details while keeping `parent` unchanged.
-        ✅ Properly updates diagnoses.
-        """
         diagnoses_data = validated_data.pop('diagnoses', None)
+
         if diagnoses_data is not None:
-            # Only update diagnoses if they are included in the request
-            existing_diagnoses = {diag.name: diag for diag in instance.diagnoses.all()}  
-
+            instance.diagnoses.clear()
             for diagnosis in diagnoses_data:
-                diagnosis_name = diagnosis['name']
-                if diagnosis_name not in existing_diagnoses:
-                    diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=diagnosis_name)
-                    instance.diagnoses.add(diagnosis_obj)
+                name = diagnosis.get('name')
+                if not name:
+                    raise serializers.ValidationError("Each diagnosis must have a 'name'.")
+                diagnosis_obj, _ = Diagnosis.objects.get_or_create(name=name.strip())
+                instance.diagnoses.add(diagnosis_obj)
 
-        # ✅ Update other child fields
         instance.full_name = validated_data.get('full_name', instance.full_name)
         instance.birthday = validated_data.get('birthday', instance.birthday)
         instance.gender = validated_data.get('gender', instance.gender)
         instance.save()
+
         return instance

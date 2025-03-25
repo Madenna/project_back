@@ -869,19 +869,8 @@ class AddChildView(generics.CreateAPIView):
     serializer_class = ChildSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        """
-        ✅ Automatically assign the current user as the parent.
-        ✅ Ensure only valid diagnoses are assigned.
-        """
-        diagnoses_data = self.request.data.get("diagnoses", [])  # Extract diagnoses from request
-
-        # Ensure diagnoses exist
-        valid_diagnoses = Diagnosis.objects.filter(id__in=diagnoses_data)
-        child = serializer.save(parent=self.request.user)
-
-        # Assign diagnoses (if any)
-        child.diagnoses.set(valid_diagnoses)
+    def get_serializer_context(self):
+        return {"request": self.request}
 
 class EditChildView(generics.RetrieveUpdateAPIView):
     """
