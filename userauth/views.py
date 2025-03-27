@@ -907,3 +907,15 @@ class EditChildView(generics.RetrieveUpdateAPIView):
         queryset = Child.objects.filter(parent=user)
         logger.warning(f"[EditChildView] User: {user} | Accessible children IDs: {[str(child.id) for child in queryset]}")
         return queryset
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+
+        if not serializer.is_valid():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Child PATCH failed validation: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_update(serializer)
+        return Response(serializer.data)
