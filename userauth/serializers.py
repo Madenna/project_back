@@ -442,10 +442,16 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class DiagnosisSerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+
     class Meta:
         model = Diagnosis
         fields = ['id', 'name']
-        read_only_fields = ['id'] 
+        read_only_fields = ['id']
+
+    def validate_name(self, value):
+        # ✅ Don’t raise error for existing diagnoses
+        return value
 
 # class ChildSerializer(serializers.ModelSerializer):
 #     diagnoses = DiagnosisSerializer(many=True)  # ✅ Allowing nested input
