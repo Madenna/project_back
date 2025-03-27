@@ -38,5 +38,5 @@ urlpatterns = [
     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),  # ✅ Step 3: Set new password
     path('add-child/', AddChildView.as_view(), name='add_child'), # ✅ API to Add Child
     path('children/', ListChildrenView.as_view(), name='list_children'),
-    path('edit-child/<uuid:pk>/', EditChildView.as_view(), name='edit_child'),  # ✅ Edit Child
+    path('edit-child/<uuid:id>/', EditChildView.as_view(), name='edit_child'),  # ✅ Edit Child
 ]

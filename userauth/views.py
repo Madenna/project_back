@@ -607,7 +607,6 @@ from .utils import send_verification_email, generate_otp
 # Get the custom User model
 User = get_user_model()
 
-
 ### ✅ Protected API View ###
 class ProtectedView(APIView):
     """🔐 Requires authentication to access."""
@@ -904,4 +903,7 @@ class EditChildView(generics.RetrieveUpdateAPIView):
 
     def get_queryset(self):
         """✅ Ensure users can only access their own children"""
-        return Child.objects.filter(parent=self.request.user)
+        user = self.request.user
+        queryset = Child.objects.filter(parent=user)
+        logger.warning(f"[EditChildView] User: {user} | Accessible children IDs: {[str(child.id) for child in queryset]}")
+        return queryset
