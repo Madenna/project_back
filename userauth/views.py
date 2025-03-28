@@ -919,9 +919,11 @@ class EditChildView(generics.RetrieveUpdateAPIView):
 
         self.perform_update(serializer)
         return Response(serializer.data)
+    
 class VerifyNewEmailView(APIView):
     serializer_class = VerifyNewEmailSerializer
-
+    
+    @swagger_auto_schema(request_body=VerifyNewEmailSerializer)
     def post(self, request):
         serializer = VerifyNewEmailSerializer(data=request.data)
         if serializer.is_valid():
