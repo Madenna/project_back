@@ -599,7 +599,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers  
 
 from .serializers import (
-    UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer,
+    UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer, VerifyNewEmailSerializer,
     PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, ChildSerializer
 )
 from .models import OTPVerification, Profile, Child, Diagnosis
@@ -919,3 +919,19 @@ class EditChildView(generics.RetrieveUpdateAPIView):
 
         self.perform_update(serializer)
         return Response(serializer.data)
+class VerifyNewEmailView(APIView):
+    serializer_class = VerifyNewEmailSerializer
+
+    def post(self, request):
+        serializer = VerifyNewEmailSerializer(data=request.data)
+        if serializer.is_valid():
+            new_email = serializer.validated_data["new_email"]
+            user = request.user
+
+            user.email = new_email
+            user.temp_email = None
+            user.save()
+
+            return Response({"message": "Email updated successfully."}, status=200)
+
+        return Response(serializer.errors, status=400)

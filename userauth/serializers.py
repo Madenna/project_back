@@ -170,6 +170,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from .models import User, Profile, OTPVerification, Child, Diagnosis
+from userauth.utils import send_verification_email
 from django.conf import settings
 
 # -------------------------------
@@ -430,7 +431,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         new_email = user_data.get('email')
         if new_email and new_email != user.email:
             user.temp_email = new_email  # you can trigger OTP verification if needed
-        user.save()
+            user.save()
+
+            otp_obj, _ = OTPVerification.objects.get_or_create(user=user)
+            otp_obj.generate_otp()
+            send_verification_email(new_email, otp_obj.otp_code)
+
+            return {"message": "Verification code sent to your new email."}
 
         # ✅ Update Profile fields
         for field in ['profile_photo', 'additional_info', 'city']:

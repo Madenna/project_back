@@ -16,7 +16,7 @@
 # ]
 from django.urls import path
 from .views import (
-    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, ListChildrenView,
+    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, ListChildrenView, VerifyNewEmailView,
     PasswordResetView, VerifyOTPView, ResendEmailOTPView, AddChildView, EditChildView, RequestPasswordResetView, VerifyPasswordResetOTPView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -28,6 +28,7 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # ✅ Refresh JWT Token
 
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),  # ✅ Verify Email OTP
+    path("verify-new-email/", VerifyNewEmailView.as_view(), name="verify_new_email"),
     path('resend-otp/', ResendEmailOTPView.as_view(), name='resend_otp'),  # ✅ Resend Email OTP
 
     path('protected/', ProtectedView.as_view(), name='protected'),  # ✅ Protected route
