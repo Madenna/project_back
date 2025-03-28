@@ -922,18 +922,31 @@ class EditChildView(generics.RetrieveUpdateAPIView):
     
 class VerifyNewEmailView(APIView):
     serializer_class = VerifyNewEmailSerializer
-    
+    permission_classes = [permissions.IsAuthenticated]
+
     @swagger_auto_schema(request_body=VerifyNewEmailSerializer)
     def post(self, request):
         serializer = VerifyNewEmailSerializer(data=request.data)
         if serializer.is_valid():
             new_email = serializer.validated_data["new_email"]
+            otp = serializer.validated_data["otp"]
             user = request.user
 
-            user.email = new_email
-            user.temp_email = None
-            user.save()
+            try:
+                otp_record = OTPVerification.objects.get(user=user, otp_code=otp)
 
-            return Response({"message": "Email updated successfully."}, status=200)
+                if otp_record.is_expired():
+                    return Response({"error": "OTP expired."}, status=400)
+
+                # ✅ All good, change the email
+                user.email = new_email
+                user.temp_email = None
+                user.save()
+                otp_record.delete()
+
+                return Response({"message": "Email updated successfully."}, status=200)
+
+            except OTPVerification.DoesNotExist:
+                return Response({"error": "Invalid OTP or email."}, status=400)
 
         return Response(serializer.errors, status=400)

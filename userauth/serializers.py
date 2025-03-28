@@ -343,16 +343,20 @@ class VerifyNewEmailSerializer(serializers.Serializer):
     def validate(self, data):
         """Check if OTP is valid and email matches"""
         try:
-            otp_record = OTPVerification.objects.get(user__temp_email=data["new_email"], otp_code=data["otp"])
-            
-            # Check if OTP is expired
-            time_difference = timezone.now() - otp_record.created_at
-            if time_difference.total_seconds() > 600:
+            # ✅ Get user with matching temp_email
+            user = User.objects.get(temp_email=data["new_email"])
+
+            # ✅ Get OTP record
+            otp_record = OTPVerification.objects.get(user=user, otp_code=data["otp"])
+
+            # ✅ Check if expired
+            if (timezone.now() - otp_record.created_at).total_seconds() > 600:
                 raise serializers.ValidationError("OTP has expired. Request a new one.")
 
+            # All good
             return data
 
-        except OTPVerification.DoesNotExist:
+        except (User.DoesNotExist, OTPVerification.DoesNotExist):
             raise serializers.ValidationError("Invalid OTP or email.")
 ### ✅ User Serializer ###
 class UserSerializer(serializers.ModelSerializer):
