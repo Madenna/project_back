@@ -926,27 +926,17 @@ class VerifyNewEmailView(APIView):
 
     @swagger_auto_schema(request_body=VerifyNewEmailSerializer)
     def post(self, request):
-        serializer = VerifyNewEmailSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            new_email = serializer.validated_data["new_email"]
-            otp = serializer.validated_data["otp"]
-            user = request.user
+            user = serializer.validated_data["user"]
+            otp_record = serializer.validated_data["otp_record"]
 
-            try:
-                otp_record = OTPVerification.objects.get(user=user, otp_code=otp)
+            # ✅ Finalize the change
+            user.email = serializer.validated_data["new_email"]
+            user.temp_email = None
+            user.save()
+            otp_record.delete()
 
-                if otp_record.is_expired():
-                    return Response({"error": "OTP expired."}, status=400)
-
-                # ✅ All good, change the email
-                user.email = new_email
-                user.temp_email = None
-                user.save()
-                otp_record.delete()
-
-                return Response({"message": "Email updated successfully."}, status=200)
-
-            except OTPVerification.DoesNotExist:
-                return Response({"error": "Invalid OTP or email."}, status=400)
+            return Response({"message": "Email updated successfully."}, status=200)
 
         return Response(serializer.errors, status=400)

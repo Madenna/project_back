@@ -353,11 +353,13 @@ class VerifyNewEmailSerializer(serializers.Serializer):
             if (timezone.now() - otp_record.created_at).total_seconds() > 600:
                 raise serializers.ValidationError("OTP has expired. Request a new one.")
 
-            # All good
+            data['user'] = user
+            data['otp_record'] = otp_record
             return data
 
         except (User.DoesNotExist, OTPVerification.DoesNotExist):
             raise serializers.ValidationError("Invalid OTP or email.")
+
 ### ✅ User Serializer ###
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
