@@ -630,6 +630,11 @@ class RegisterView(APIView):
                 user.is_active = False  # User must verify email first
                 user.save()
 
+                #default profile image initially
+                Profile.objects.get_or_create(
+                    user=user, 
+                    defaults={'profile_photo': settings.DEFAULT_PROFILE_PHOTO}
+                )
                 # Generate OTP and send verification email
                 otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
                 otp_verification.generate_otp()
@@ -862,8 +867,13 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
         serializer = self.get_serializer(profile, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        result = serializer.save()
+
+        # ✅ Return custom message if email was changed
+        if serializer.context.get("email_verification_sent"):
+            return Response({"message": "Verification code sent to your new email."})
+
+        return Response(self.get_serializer(result).data)
 
 ### ✅ Resend Email Verification OTP ###
 class ResendEmailOTPView(APIView):

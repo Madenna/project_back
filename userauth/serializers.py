@@ -353,8 +353,8 @@ class VerifyNewEmailSerializer(serializers.Serializer):
             if (timezone.now() - otp_record.created_at).total_seconds() > 600:
                 raise serializers.ValidationError("OTP has expired. Request a new one.")
 
-            data['user'] = user
-            data['otp_record'] = otp_record
+            self.user = user
+            self.otp_record = otp_record
             return data
 
         except (User.DoesNotExist, OTPVerification.DoesNotExist):
@@ -425,6 +425,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
+        if not rep.get('profile_photo'):  # ✅ Fix: use .get()
+            rep['profile_photo'] = getattr(settings, 'DEFAULT_PROFILE_PHOTO', '')
         return rep
 
     def update(self, instance, validated_data):
@@ -442,10 +444,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             otp_obj, _ = OTPVerification.objects.get_or_create(user=user)
             otp_obj.generate_otp()
             send_verification_email(new_email, otp_obj.otp_code)
+            self.context['email_verification_sent'] = True
 
-            return {"message": "Verification code sent to your new email."}
+        user.save()
 
-        # ✅ Update Profile fields
         for field in ['profile_photo', 'additional_info', 'city']:
             if field in validated_data:
                 setattr(instance, field, validated_data[field])

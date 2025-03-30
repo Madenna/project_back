@@ -161,7 +161,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
-    profile_photo = models.URLField(blank=True, null=True)
+    profile_photo = models.URLField(
+        blank=True,
+        null=True,
+        default='https://res.cloudinary.com/dy936wtgc/image/upload/v1742898556/balasteps/ekcozvxutn136qtdorad.jpg'
+    )
     city = models.CharField(max_length=100, blank=True, null=True)
     additional_info = models.TextField(max_length=1000, blank=True, null=True)
 
