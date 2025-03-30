@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import InformationItem, Comment, Tag
+from .models import InfoPost, InfoComment, InfoTag, InfoCategory
 
-admin.site.register(InformationItem)
-admin.site.register(Comment)
-admin.site.register(Tag)
+admin.site.register(InfoPost)
+admin.site.register(InfoComment)
+admin.site.register(InfoTag)
+admin.site.register(InfoCategory)
+

@@ -186,6 +186,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "cloudinary",
     "information",
+    "forum",
 ]
 
 # ✅ MIDDLEWARE CONFIGURATION
