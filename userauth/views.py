@@ -936,10 +936,14 @@ class VerifyNewEmailView(APIView):
 
     @swagger_auto_schema(request_body=VerifyNewEmailSerializer)
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        #serializer = self.serializer_class(data=request.data)
+        serializer = VerifyNewEmailSerializer(data=request.data, context={'request': request})
+
         if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            otp_record = serializer.validated_data["otp_record"]
+            # user = serializer.validated_data["user"]
+            # otp_record = serializer.validated_data["otp_record"]
+            user = getattr(serializer, 'validated_data', {}).get('user', request.user)
+            otp_record = serializer.validated_data.get('otp_record')
 
             # ✅ Finalize the change
             user.email = serializer.validated_data["new_email"]

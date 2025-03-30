@@ -341,24 +341,40 @@ class VerifyNewEmailSerializer(serializers.Serializer):
     otp = serializers.CharField()
 
     def validate(self, data):
-        """Check if OTP is valid and email matches"""
         try:
-            # ✅ Get user with matching temp_email
-            user = User.objects.get(temp_email=data["new_email"])
-
-            # ✅ Get OTP record
+            request = self.context.get("request")
+            user = request.user  # get user from request context
             otp_record = OTPVerification.objects.get(user=user, otp_code=data["otp"])
 
-            # ✅ Check if expired
             if (timezone.now() - otp_record.created_at).total_seconds() > 600:
                 raise serializers.ValidationError("OTP has expired. Request a new one.")
 
-            self.user = user
-            self.otp_record = otp_record
+            data['user'] = user
+            data['otp_record'] = otp_record
             return data
 
-        except (User.DoesNotExist, OTPVerification.DoesNotExist):
+        except OTPVerification.DoesNotExist:
             raise serializers.ValidationError("Invalid OTP or email.")
+
+    # def validate(self, data):
+    #     """Check if OTP is valid and email matches"""
+    #     try:
+    #         # ✅ Get user with matching temp_email
+    #         user = User.objects.get(temp_email=data["new_email"])
+
+    #         # ✅ Get OTP record
+    #         otp_record = OTPVerification.objects.get(user=user, otp_code=data["otp"])
+
+    #         # ✅ Check if expired
+    #         if (timezone.now() - otp_record.created_at).total_seconds() > 600:
+    #             raise serializers.ValidationError("OTP has expired. Request a new one.")
+
+    #         self.user = user
+    #         self.otp_record = otp_record
+    #         return data
+
+    #     except (User.DoesNotExist, OTPVerification.DoesNotExist):
+    #         raise serializers.ValidationError({"detail": "Invalid OTP or email."})
 
 ### ✅ User Serializer ###
 class UserSerializer(serializers.ModelSerializer):
