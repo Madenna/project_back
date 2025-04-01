@@ -329,3 +329,6 @@ LOGGING = {
 }
 
 DEFAULT_PROFILE_PHOTO = 'https://res.cloudinary.com/dy936wtgc/image/upload/v1742898556/balasteps/ekcozvxutn136qtdorad.jpg'
+
+TIME_ZONE = 'Asia/Atyrau'
+USE_TZ = True

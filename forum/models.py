@@ -15,7 +15,13 @@ class DiscussionPost(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="forum_posts")
     title = models.CharField(max_length=255)
     content = models.TextField()
-    categories = models.ManyToManyField(DiscussionCategory, related_name="posts")
+    #categories = models.ManyToManyField(DiscussionCategory, related_name="posts")
+    category = models.ForeignKey(
+        DiscussionCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="forum_posts"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -33,6 +39,9 @@ class Comment(models.Model):
 
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_comments", blank=True)
 
     def __str__(self):
         return f"Comment by {self.user.full_name} on {self.post.title}"
+    
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')

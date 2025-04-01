@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import DiscussionPost, DiscussionCategory, Comment
+from django.utils.timezone import localtime
 
 class DiscussionCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,25 +13,37 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'content', 'created_at']
+        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'replies'] 
+    
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+    
+    likes_count = serializers.SerializerMethodField()
 
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+    
+    replies = serializers.SerializerMethodField()
+
+    def get_replies(self, obj):
+        return CommentSerializer(obj.replies.all(), many=True).data
 
 class DiscussionPostSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    categories = DiscussionCategorySerializer(many=True)
+    #categories = DiscussionCategorySerializer(many=True)
+    category = serializers.SlugRelatedField(
+        slug_field='name',
+        queryset=DiscussionCategory.objects.all()
+    )
     comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = DiscussionPost
-        fields = ['id', 'user', 'title', 'content', 'created_at', 'categories', 'comments']
+        fields = ['id', 'user', 'title', 'content', 'created_at', 'category', 'comments']
 
     def create(self, validated_data):
         request = self.context.get("request")
-        categories_data = validated_data.pop('categories', [])
-        post = DiscussionPost.objects.create(user=request.user, **validated_data)
+        return DiscussionPost.objects.create(user=request.user, **validated_data)
 
-        for cat_data in categories_data:
-            category, _ = DiscussionCategory.objects.get_or_create(name=cat_data['name'])
-            post.categories.add(category)
-
-        return post

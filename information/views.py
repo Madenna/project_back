@@ -5,11 +5,8 @@ from .serializers import InfoPostSerializer, InfoCommentSerializer, InfoTagSeria
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.views import APIView, Response
-
-# class InformationItemViewSet(viewsets.ModelViewSet):
-#     queryset = InformationItem.objects.all().order_by("-created_at")
-#     serializer_class = InformationItemSerializer
-#     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+from rest_framework.parsers import MultiPartParser, FormParser
+from .utils import upload_to_cloudinary
 
 class InfoPostListView(generics.ListAPIView):
     serializer_class = InfoPostSerializer
@@ -17,7 +14,6 @@ class InfoPostListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = InfoPost.objects.all().order_by('-created_at')
-
         category_name = self.request.query_params.get('category')
         tag_name = self.request.query_params.get('tag')
 
@@ -28,7 +24,7 @@ class InfoPostListView(generics.ListAPIView):
             queryset = queryset.filter(tags__name__iexact=tag_name)
 
         return queryset
-    
+
     @swagger_auto_schema(
         operation_description="Returns a list of Info Hub posts. Supports filtering by category and tag using query parameters.",
         manual_parameters=[
@@ -39,6 +35,25 @@ class InfoPostListView(generics.ListAPIView):
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
+
+class InfoPostCreateView(generics.CreateAPIView):
+    serializer_class = InfoPostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    @swagger_auto_schema(request_body=InfoPostSerializer)
+    def post(self, request, *args, **kwargs):
+        data = request.data.copy()
+
+        if 'photo' in request.FILES:
+            uploaded_file = request.FILES['photo']
+            photo_url = upload_to_cloudinary(uploaded_file)
+            data['photo'] = photo_url
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
 
 class InfoCommentCreateView(generics.CreateAPIView):
     serializer_class = InfoCommentSerializer
@@ -51,11 +66,13 @@ class InfoCommentCreateView(generics.CreateAPIView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
-    
+
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
+        parent_id = self.request.data.get('parent_id')
         post = get_object_or_404(InfoPost, id=post_id)
-        serializer.save(user=self.request.user, post=post)
+        parent = InfoComment.objects.filter(id=parent_id).first() if parent_id else None
+        serializer.save(user=self.request.user, post=post, parent=parent)
 
 class InfoCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = InfoComment.objects.all()
@@ -96,49 +113,19 @@ class InfoCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
-
-class ToggleLikePostView(APIView):
+class ToggleLikeCommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_description="Toggle like/unlike for a specific Info Hub post. Returns liked: true or false.",
-        responses={
-            200: openapi.Response(
-                description="Success",
-                examples={"application/json": {"liked": True}}
-            ),
-            404: "Post not found"
-        }
+        operation_description="Toggle like/unlike for a specific comment.",
+        responses={200: openapi.Response(description="Success", examples={"application/json": {"liked": True}})}
     )
-
-    def post(self, request, post_id):
-        post = get_object_or_404(InfoPost, id=post_id)
-        user = request.user
-        if user in post.liked_by.all():
-            post.liked_by.remove(user)
-            return Response({"liked": False}, status=200)
+    def post(self, request, comment_id):
+        comment = get_object_or_404(InfoComment, id=comment_id)
+        if request.user in comment.likes.all():
+            comment.likes.remove(request.user)
+            liked = False
         else:
-            post.liked_by.add(user)
-            return Response({"liked": True}, status=200)
-        
-from rest_framework.parsers import MultiPartParser, FormParser
-from .utils import upload_to_cloudinary
-
-class InfoPostCreateView(generics.CreateAPIView):
-    serializer_class = InfoPostSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-
-    @swagger_auto_schema(request_body=InfoPostSerializer)
-    def post(self, request, *args, **kwargs):
-        data = request.data.copy()
-
-        if 'photo' in request.FILES:
-            uploaded_file = request.FILES['photo']
-            photo_url = upload_to_cloudinary(uploaded_file)
-            data['photo'] = photo_url  # Store Cloudinary URL in DB
-
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=201)
+            comment.likes.add(request.user)
+            liked = True
+        return Response({"liked": liked, "likes_count": comment.likes.count()})

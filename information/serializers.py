@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import InfoPost, InfoComment, InfoTag, InfoCategory
+from django.utils.timezone import localtime
 
 class InfoTagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,24 +13,34 @@ class InfoCategorySerializer(serializers.ModelSerializer):
 
 class InfoCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = InfoComment
-        fields = ['id', 'user', 'content', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'content', 'created_at', 'updated_at', 'likes_count', 'replies']
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_replies(self, obj):
+        # Return nested replies (recursive)
+        return InfoCommentSerializer(obj.replies.all(), many=True).data
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
 
 class InfoPostSerializer(serializers.ModelSerializer):
     photo = serializers.URLField(required=False, allow_null=True)
     category = InfoCategorySerializer()
     tags = InfoTagSerializer(many=True)
     comments = InfoCommentSerializer(many=True, read_only=True)
-    likes_count = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = InfoPost
-        fields = ['id', 'title', 'content', 'category', 'tags', 'created_at', 'photo', 'comments', 'likes_count']
-
-    def get_likes_count(self, obj):
-        return obj.liked_by.count()
+        fields = ['id', 'title', 'content', 'category', 'tags', 'created_at', 'photo', 'comments']
 
 # class InformationItemSerializer(serializers.ModelSerializer):
 #     tags = TagSerializer(many=True)
