@@ -33,14 +33,33 @@ class InfoCommentSerializer(serializers.ModelSerializer):
         return rep
 
 class InfoPostSerializer(serializers.ModelSerializer):
-    photo = serializers.URLField(required=False, allow_null=True)
-    category = InfoCategorySerializer()
-    tags = InfoTagSerializer(many=True)
+    # Read-only nested serializers for GET
+    category = InfoCategorySerializer(read_only=True)
+    tags = InfoTagSerializer(many=True, read_only=True)
     comments = InfoCommentSerializer(many=True, read_only=True)
-    
+
+    # Write-only fields for POST/PUT
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=InfoCategory.objects.all(), write_only=True, source='category'
+    )
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=InfoTag.objects.all(), many=True, write_only=True, source='tags'
+    )
+
+    photo = serializers.URLField(required=False, allow_null=True)
+
     class Meta:
         model = InfoPost
-        fields = ['id', 'title', 'content', 'category', 'tags', 'created_at', 'photo', 'comments']
+        fields = [
+            'id',
+            'title',
+            'content',
+            'photo',
+            'created_at',
+            'category', 'category_id',
+            'tags', 'tag_ids',
+            'comments',
+        ]
 
 # class InformationItemSerializer(serializers.ModelSerializer):
 #     tags = TagSerializer(many=True)
