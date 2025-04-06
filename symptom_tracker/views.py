@@ -6,17 +6,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from rest_framework.exceptions import PermissionDenied
 
 class SymptomEntryListCreateView(generics.ListCreateAPIView):
     serializer_class = SymptomEntrySerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return SymptomEntry.objects.filter(parent=self.request.user).order_by('-date')
+        return SymptomEntry.objects.filter(child__parent=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(parent=self.request.user)
+        child = serializer.validated_data['child']
+        if child.parent != self.request.user:
+            raise PermissionDenied("You can only add symptoms for your own child.")
+        serializer.save()
 
     @swagger_auto_schema(
         operation_description="List all symptom entries for the current parent user.",
@@ -40,7 +43,7 @@ class SymptomEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
 
     def get_queryset(self):
-        return SymptomEntry.objects.filter(parent=self.request.user)
+        return SymptomEntry.objects.filter(child__parent=self.request.user)
 
     @swagger_auto_schema(
         operation_description="Retrieve a specific symptom entry.",

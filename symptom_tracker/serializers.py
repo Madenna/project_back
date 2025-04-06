@@ -7,7 +7,7 @@ class SymptomEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = SymptomEntry
         fields = [
-            'id', 'child', 'child_name', 'date', 'symptom_name', 'treatment', 'created_at', 'updated_at'
+            'id', 'child', 'child_name', 'date', 'symptom_name', 'action_taken', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'child_name']
 
@@ -20,8 +20,15 @@ class SymptomEntrySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Date cannot be in the future.")
         return value
 
-    def create(self, validated_data):
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            validated_data['parent'] = request.user
-        return super().create(validated_data)
+    def validate_child(self, child):
+        request = self.context.get('request')
+        if request and request.user != child.parent:
+            raise serializers.ValidationError("You can only assign symptoms to your own children.")
+        return child
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        from django.utils.timezone import localtime
+        rep['created_at'] = localtime(instance.created_at).strftime('%Y-%m-%d %H:%M:%S')
+        rep['updated_at'] = localtime(instance.updated_at).strftime('%Y-%m-%d %H:%M:%S')
+        return rep
