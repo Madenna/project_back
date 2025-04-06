@@ -10,6 +10,12 @@ class SymptomEntrySerializer(serializers.ModelSerializer):
             'id', 'child', 'child_name', 'date', 'symptom_name', 'action_taken', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'child_name']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'children'):
+            self.fields['child'].queryset = request.user.children.all()
 
     def get_child_name(self, obj):
         return obj.child.full_name if obj.child else None
