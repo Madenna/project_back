@@ -187,6 +187,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "information",
     "forum",
+    "symptom_tracker",
 ]
 
 # ✅ MIDDLEWARE CONFIGURATION
