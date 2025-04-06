@@ -715,29 +715,8 @@ class VerifyOTPView(APIView):
     def post(self, request):
         serializer = OTPVerificationSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data["email"]
-            user_otp = serializer.validated_data["otp"]
-
-            try:
-                user = User.objects.get(email=email)
-                otp_verification = OTPVerification.objects.get(user=user)
-
-                # Check if OTP is expired (10 min limit)
-                if otp_verification.is_expired():
-                    otp_verification.delete()
-                    return Response({"error": "OTP expired, request a new one."}, status=status.HTTP_400_BAD_REQUEST)
-
-                if otp_verification.otp_code == user_otp:
-                    user.is_active = True
-                    user.save()
-                    otp_verification.delete()
-                    return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
-                else:
-                    return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
-            except (User.DoesNotExist, OTPVerification.DoesNotExist):
-                return Response({"error": "OTP expired or user not found"}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Email verified successfully"}, status=200)
+        return Response(serializer.errors, status=400)
 
 class RequestPasswordResetView(APIView):
     """

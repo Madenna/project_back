@@ -142,7 +142,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)  # ✅ Email-based authentication
-    temp_email = models.EmailField(blank=True, null=True)  # ✅ For email change requests
+    temp_email = models.EmailField(blank=True, null=True, unique=True)  # ✅ For email change requests
     password = models.CharField(max_length=255)
     is_active = models.BooleanField(default=False)  # ✅ Users must verify email first
     is_staff = models.BooleanField(default=False)

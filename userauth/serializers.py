@@ -219,14 +219,22 @@ class OTPVerificationSerializer(serializers.Serializer):
     otp = serializers.CharField()
 
     def validate(self, data):
-        """Check if the OTP is expired"""
+        """Validate OTP and activate user"""
         try:
             otp_record = OTPVerification.objects.get(user__email=data["email"], otp_code=data["otp"])
-            
-            # Check if OTP is expired (10 min limit)
-            time_difference = timezone.now() - otp_record.created_at
-            if time_difference.total_seconds() > 600:  # 600 sec = 10 min
+
+            # Check expiration
+            if (timezone.now() - otp_record.created_at).total_seconds() > 600:
+                otp_record.delete()
                 raise serializers.ValidationError("OTP has expired. Request a new one.")
+
+            # ✅ Activate the user
+            user = otp_record.user
+            user.is_active = True
+            user.save()
+
+            # ✅ Remove used OTP
+            otp_record.delete()
 
             return data
 
