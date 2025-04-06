@@ -188,6 +188,8 @@ INSTALLED_APPS = [
     "information",
     "forum",
     "symptom_tracker",
+    "marketplace",
+    "django_filters",
 ]
 
 # ✅ MIDDLEWARE CONFIGURATION
@@ -286,6 +288,7 @@ CORS_ALLOWED_ORIGINS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
