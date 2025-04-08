@@ -1,15 +1,13 @@
-from rest_framework import generics, permissions, filters
+from rest_framework import generics, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
-from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import EquipmentItem
-from .serializers import EquipmentItemSerializer
-from .models import EquipmentPhoto
-from information.utils import upload_to_cloudinary  
+from .models import EquipmentItem, EquipmentCategory
+from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer
+
 
 class EquipmentItemListCreateView(generics.ListCreateAPIView):
     serializer_class = EquipmentItemSerializer
@@ -20,14 +18,7 @@ class EquipmentItemListCreateView(generics.ListCreateAPIView):
         return EquipmentItem.objects.filter(owner=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        item = serializer.save(owner=self.request.user)
-
-        # Upload each photo and link to item
-        photos = self.request.FILES.getlist('photos')
-        for photo in photos:
-            image_url = upload_to_cloudinary(photo) 
-            EquipmentPhoto.objects.create(item=item, image_url=image_url)
-
+        serializer.save(owner=self.request.user)
 
     @swagger_auto_schema(operation_description="List all equipment items posted by the current user.")
     def get(self, request, *args, **kwargs):
@@ -70,11 +61,13 @@ class EquipmentItemDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 
-class EquipmentItemListView(generics.ListAPIView):
+class PublicEquipmentListView(generics.ListAPIView):
     queryset = EquipmentItem.objects.all().order_by('-created_at')
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.AllowAny]
 
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['category__name', 'condition', 'available_for__name']
-    search_fields = ['name', 'description', 'location']
+
+class EquipmentCategoryListView(generics.ListAPIView):
+    queryset = EquipmentCategory.objects.all().order_by('name')
+    serializer_class = EquipmentCategorySerializer
+    permission_classes = [permissions.AllowAny]

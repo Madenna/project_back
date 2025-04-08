@@ -18,14 +18,6 @@ class DiscussionPostListCreateView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('category', openapi.IN_QUERY, description="Filter by category name", type=openapi.TYPE_STRING)
-        ]
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def get_serializer_context(self):
         return {"request": self.request}
 
@@ -36,20 +28,8 @@ class DiscussionPostDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter('category', openapi.IN_QUERY, description="Filter by category name", type=openapi.TYPE_STRING)
-        ]
-    )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
-    def get_queryset(self):
-        queryset = DiscussionPost.objects.all()
-        category = self.request.query_params.get("category")
-        if category:
-            queryset = queryset.filter(category__name=category)
-        return queryset
 
 
 class CommentCreateView(generics.CreateAPIView):
