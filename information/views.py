@@ -13,24 +13,10 @@ class InfoPostListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        queryset = InfoPost.objects.all().order_by('-created_at')
-        category_name = self.request.query_params.get('category')
-        tag_name = self.request.query_params.get('tag')
-
-        if category_name:
-            queryset = queryset.filter(category__name__iexact=category_name)
-
-        if tag_name:
-            queryset = queryset.filter(tags__name__iexact=tag_name)
-
-        return queryset
+        return InfoPost.objects.all().order_by('-created_at')
 
     @swagger_auto_schema(
-        operation_description="Returns a list of Info Hub posts. Supports filtering by category and tag using query parameters.",
-        manual_parameters=[
-            openapi.Parameter('category', openapi.IN_QUERY, description="Filter by category name", type=openapi.TYPE_STRING),
-            openapi.Parameter('tag', openapi.IN_QUERY, description="Filter by tag name", type=openapi.TYPE_STRING),
-        ],
+        operation_description="Returns a list of Info Hub posts.",
         responses={200: InfoPostSerializer(many=True)}
     )
     def get(self, request, *args, **kwargs):
