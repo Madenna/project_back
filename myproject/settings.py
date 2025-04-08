@@ -280,7 +280,6 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Ensure it's correctly set
 # ✅ CORS SETTINGS (Allow frontend to connect)
 CORS_ALLOWED_ORIGINS = [
     "https://balasteps-auth.web.app",
-    "https://balasteps-auth.firebaseapp.com",
     "http://localhost:3000",
 ]
 

@@ -597,13 +597,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers  
-
+from rest_framework.decorators import api_view
 from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer, VerifyNewEmailSerializer,
     PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, ChildSerializer
 )
 from .models import OTPVerification, Profile, Child, Diagnosis
 from .utils import send_verification_email, generate_otp
+
+@api_view(["GET"])
+def health_check(request):
+    return Response({"status": "ok"})
+
 # Get the custom User model
 User = get_user_model()
 
@@ -656,27 +661,34 @@ class LoginView(APIView):
 
     @swagger_auto_schema(request_body=LoginSerializer)
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data["email"]
-            password = serializer.validated_data["password"]
-            #user = get_object_or_404(User, email=email)
-            user = User.objects.filter(email=email).first()
-            if not user:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-            if not user.check_password(password):
-                return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            print("LoginView: received request")
+            print(request.data)
+            serializer = LoginSerializer(data=request.data)
+            if serializer.is_valid():
+                email = serializer.validated_data["email"]
+                password = serializer.validated_data["password"]
+                #user = get_object_or_404(User, email=email)
+                user = User.objects.filter(email=email).first()
+                if not user:
+                    return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+                if not user.check_password(password):
+                    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            if not user.is_active:
-                return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
+                if not user.is_active:
+                    return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
 
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token)
-            })
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token)
+                })
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": "Internal server error", "details": str(e)}, status=500)
 
             
         #     if user.check_password(password):

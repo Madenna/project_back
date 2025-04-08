@@ -16,12 +16,13 @@
 # ]
 from django.urls import path
 from .views import (
-    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, ListChildrenView, VerifyNewEmailView,
+    RegisterView, LoginView, LogoutView, ProtectedView, ProfileView, ListChildrenView, VerifyNewEmailView, health_check,
     PasswordResetView, VerifyOTPView, ResendEmailOTPView, AddChildView, EditChildView, RequestPasswordResetView, VerifyPasswordResetOTPView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
+    path("health/", health_check, name="health_check"),
     path('register/', RegisterView.as_view(), name='register'),  # ✅ Register
     path('login/', LoginView.as_view(), name='login'),  # ✅ Custom Login
     path('logout/', LogoutView.as_view(), name='logout'),  # ✅ Logout
