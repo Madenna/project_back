@@ -40,6 +40,19 @@ class InfoPostCreateView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=201)
+    
+class InfoPostDetailView(generics.RetrieveAPIView):
+    queryset = InfoPost.objects.all()
+    serializer_class = InfoPostSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'id'
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific Info Hub post by its ID.",
+        responses={200: InfoPostSerializer()}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 class InfoCommentCreateView(generics.CreateAPIView):
     serializer_class = InfoCommentSerializer
