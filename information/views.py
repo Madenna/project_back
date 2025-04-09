@@ -7,6 +7,7 @@ from drf_yasg import openapi
 from rest_framework.views import APIView, Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from .utils import upload_to_cloudinary
+from rest_framework.exceptions import PermissionDenied
 
 class InfoPostListView(generics.ListAPIView):
     serializer_class = InfoPostSerializer
@@ -29,6 +30,9 @@ class InfoPostCreateView(generics.CreateAPIView):
 
     @swagger_auto_schema(request_body=InfoPostSerializer)
     def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied("Only admins can create Info Hub posts.")
+
         data = request.data.copy()
 
         if 'photo' in request.FILES:
