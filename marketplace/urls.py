@@ -4,6 +4,7 @@ from .views import (
     EquipmentItemDetailView,
     PublicEquipmentListView,
     EquipmentCategoryListView,  
+    AvailabilityTypeListView,
 )
 
 urlpatterns = [
@@ -11,4 +12,5 @@ urlpatterns = [
     path("my-items/<uuid:id>/", EquipmentItemDetailView.as_view(), name="my_equipment_detail"),
     path("public-items/", PublicEquipmentListView.as_view(), name="public_equipment_list"),
     path("categories/", EquipmentCategoryListView.as_view(), name="equipment_category_list"),  
+    path("availability-types/", AvailabilityTypeListView.as_view(), name="availability_type_list"),
 ]

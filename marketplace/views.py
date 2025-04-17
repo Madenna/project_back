@@ -5,8 +5,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
-from .models import EquipmentItem, EquipmentCategory
-from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer
+from .models import EquipmentItem, EquipmentCategory, AvailabilityType
+from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer, AvailabilityTypeSerializer
 
 
 class EquipmentItemListCreateView(generics.ListCreateAPIView):
@@ -70,4 +70,9 @@ class PublicEquipmentListView(generics.ListAPIView):
 class EquipmentCategoryListView(generics.ListAPIView):
     queryset = EquipmentCategory.objects.all().order_by('name')
     serializer_class = EquipmentCategorySerializer
+    permission_classes = [permissions.AllowAny]
+    
+class AvailabilityTypeListView(generics.ListAPIView):
+    queryset = AvailabilityType.objects.all().order_by('name')
+    serializer_class = AvailabilityTypeSerializer
     permission_classes = [permissions.AllowAny]
