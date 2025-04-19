@@ -630,32 +630,36 @@ class RegisterView(APIView):
         try:
             serializer = RegisterSerializer(data=request.data)
             if serializer.is_valid():
-                email = serializer.validated_data.get('email')
+                email = serializer.validated_data['email']
+                password = serializer.validated_data['password']
 
-                user, created = User.objects.get_or_create(email=email)
-                
-                if user.is_active:
-                    return Response({"error": "User already verified."}, status=status.HTTP_400_BAD_REQUEST)
+                user = User.objects.filter(email=email).first()
 
-                user.set_password(serializer.validated_data.get('password'))
-                user.is_active = False
-                user.save()
+                if user:
+                    if user.is_active:
+                        return Response({"error": "User already exists and verified."}, status=status.HTTP_400_BAD_REQUEST)
+                    else:
+                        # User exists but not verified → resend new OTP
+                        otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
+                        otp_verification.generate_otp()
+                        send_verification_email(user.email, otp_verification.otp_code)
 
-                Profile.objects.get_or_create(
-                    user=user,
-                    defaults={'profile_photo': settings.DEFAULT_PROFILE_PHOTO}
-                )
-
-                otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
-                otp_verification.generate_otp()
-                send_verification_email(user.email, otp_verification.otp_code)
-
-                if created:
-                    message = "User registered and OTP sent to email."
+                        return Response({"message": "User already exists but not verified. New OTP sent."}, status=status.HTTP_200_OK)
                 else:
-                    message = "User already exists. New OTP sent."
+                    # User doesn't exist → create
+                    user = User.objects.create_user(email=email, password=password, is_active=False)
+                    
+                    # Default profile
+                    Profile.objects.get_or_create(
+                        user=user,
+                        defaults={'profile_photo': settings.DEFAULT_PROFILE_PHOTO}
+                    )
 
-                return Response({"message": message}, status=status.HTTP_201_CREATED)
+                    otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
+                    otp_verification.generate_otp()
+                    send_verification_email(user.email, otp_verification.otp_code)
+
+                    return Response({"message": "User registered successfully. OTP sent."}, status=status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

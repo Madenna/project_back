@@ -176,33 +176,18 @@ from django.conf import settings
 # -------------------------------
 # ✅ REGISTER SERIALIZER
 # -------------------------------
-class RegisterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'full_name', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    full_name = serializers.CharField(max_length=255)
+    password = serializers.CharField(write_only=True, min_length=6)
 
-    def create(self, validated_data):
-        """Ensure password is hashed before saving"""
-        # user = User(
-        #     email=validated_data['email'],
-        #     full_name=validated_data['full_name']
-        # )
-        # user.set_password(validated_data['password'])  # Hash password
-        # user.is_active = False  # Require email verification
-        # user.save()
-        
-        # # Create an empty profile for the user
-        # Profile.objects.create(user=user)
-        user = User.objects.create_user(**validated_data)
-        user.is_active = False  # ✅ Require email verification
-        user.save()
-        
-        # ✅ Only create a profile if it does not exist
-        Profile.objects.get_or_create(user=user)  
+    def validate_email(self, value):
+        """Just clean email, but not block if already exists."""
+        return value
 
-
-        return user
+    def validate(self, data):
+        """Optional: add any custom validation if needed."""
+        return data
 
 # -------------------------------
 # ✅ LOGIN SERIALIZER
