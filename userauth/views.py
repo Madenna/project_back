@@ -667,40 +667,45 @@ class RegisterView(APIView):
             print(f"🚨 ERROR: {str(e)}")
             return Response({"error": "Something went wrong on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-### ✅ Login User ###
 class LoginView(APIView):
     serializer_class = LoginSerializer
 
     @swagger_auto_schema(request_body=LoginSerializer)
     def post(self, request):
         try:
-            print("LoginView: received request")
-            print(request.data)
-            serializer = LoginSerializer(data=request.data)
-            if serializer.is_valid():
-                email = serializer.validated_data["email"]
-                password = serializer.validated_data["password"]
-                #user = get_object_or_404(User, email=email)
-                user = User.objects.filter(email=email).first()
-                if not user:
-                    return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-                if not user.check_password(password):
-                    return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-                if not user.is_active:
-                    return Response({"error": "User is not verified. Please verify your email."}, status=status.HTTP_401_UNAUTHORIZED)
+            email = serializer.validated_data["email"]
+            password = serializer.validated_data["password"]
 
-                refresh = RefreshToken.for_user(user)
+            user = User.objects.filter(email=email).first()
+            if not user:
+                return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+            if not user.is_active:
+                # Если не активирован — пересоздаем и отправляем новый OTP
+                otp_record, _ = OTPVerification.objects.get_or_create(user=user)
+                otp_record.generate_otp()
+                send_verification_email(user.email, otp_record.otp_code)
+
                 return Response({
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token)
-                })
+                    "error": "Your account is not verified. A new verification code has been sent to your email."
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(password):
+                return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
+
         except Exception as e:
             import traceback
             traceback.print_exc()
-            return Response({"error": "Internal server error", "details": str(e)}, status=500)
+            return Response({"error": "Internal server error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             
         #     if user.check_password(password):
