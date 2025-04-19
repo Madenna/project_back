@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions
+from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
@@ -71,8 +72,18 @@ class EquipmentCategoryListView(generics.ListAPIView):
     queryset = EquipmentCategory.objects.all().order_by('name')
     serializer_class = EquipmentCategorySerializer
     permission_classes = [permissions.AllowAny]
-    
+
 class AvailabilityTypeListView(generics.ListAPIView):
     queryset = AvailabilityType.objects.all().order_by('name')
     serializer_class = AvailabilityTypeSerializer
     permission_classes = [permissions.AllowAny]
+
+class ConditionListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        conditions = [
+            {"value": condition.value, "label": condition.label}
+            for condition in EquipmentItem.Condition
+        ]
+        return Response(conditions)
