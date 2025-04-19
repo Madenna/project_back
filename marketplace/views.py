@@ -79,6 +79,6 @@ class AvailabilityTypeListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
 class ConditionTypeListView(generics.ListAPIView):
-    queryset = ConditionType.objects.all().order_by('label')
+    queryset = ConditionType.objects.all().order_by('name')
     serializer_class = ConditionTypeSerializer
     permission_classes = [permissions.AllowAny]
