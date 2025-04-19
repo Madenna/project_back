@@ -6,8 +6,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 
-from .models import EquipmentItem, EquipmentCategory, AvailabilityType
-from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer, AvailabilityTypeSerializer
+from .models import EquipmentItem, EquipmentCategory, AvailabilityType, ConditionType
+from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer, AvailabilityTypeSerializer, ConditionTypeSerializer
 
 
 class EquipmentItemListCreateView(generics.ListCreateAPIView):
@@ -78,12 +78,7 @@ class AvailabilityTypeListView(generics.ListAPIView):
     serializer_class = AvailabilityTypeSerializer
     permission_classes = [permissions.AllowAny]
 
-class ConditionListView(APIView):
+class ConditionTypeListView(generics.ListAPIView):
+    queryset = ConditionType.objects.all().order_by('label')
+    serializer_class = ConditionTypeSerializer
     permission_classes = [permissions.AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        conditions = [
-            {"value": condition.value, "label": condition.label}
-            for condition in EquipmentItem.Condition
-        ]
-        return Response(conditions)

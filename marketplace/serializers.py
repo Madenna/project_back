@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import EquipmentCategory, EquipmentItem, AvailabilityType, EquipmentPhoto
+from .models import EquipmentCategory, EquipmentItem, AvailabilityType, EquipmentPhoto, ConditionType
 
 class EquipmentCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +41,8 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
             'price', 'created_at', 'updated_at', 'photos'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
+    
+class ConditionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionType
+        fields = ['id', 'key', 'label']

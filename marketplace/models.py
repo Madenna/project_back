@@ -39,7 +39,7 @@ class EquipmentItem(models.Model):
         null=True,
         related_name='items'
     )
-    condition = models.CharField(max_length=20, choices=Condition.choices)
+    condition = models.ForeignKey('ConditionType', on_delete=models.SET_NULL, null=True, related_name='items')
     available_for = models.ManyToManyField(
         AvailabilityType,
         related_name='items',
@@ -66,3 +66,11 @@ class EquipmentPhoto(models.Model):
 
     def __str__(self):
         return f"Photo for {self.item.name}"
+
+class ConditionType(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    key = models.CharField(max_length=50, unique=True)  # 'new', 'gently_used', etc.
+    label = models.CharField(max_length=100)  # 'New', 'Gently Used', etc.
+
+    def __str__(self):
+        return self.label

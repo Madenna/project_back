@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import EquipmentItem, EquipmentCategory, AvailabilityType, EquipmentPhoto
+from .models import EquipmentItem, EquipmentCategory, AvailabilityType, EquipmentPhoto, ConditionType
 
 @admin.register(AvailabilityType)
 class AvailabilityTypeAdmin(admin.ModelAdmin):
@@ -18,3 +18,7 @@ class EquipmentItemAdmin(admin.ModelAdmin):
     list_display = ['name', 'owner', 'category', 'condition', 'location', 'created_at']
     raw_id_fields = ['owner']
     filter_horizontal = ['available_for']
+
+@admin.register(ConditionType)
+class ConditionTypeAdmin(admin.ModelAdmin):
+    list_display = ['key', 'label']
