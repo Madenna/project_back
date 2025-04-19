@@ -17,7 +17,11 @@ class EquipmentPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipmentPhoto
         fields = ['id', 'image_url']
-
+        
+class ConditionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionType
+        fields = ['id', 'key', 'label']
 
 class EquipmentItemSerializer(serializers.ModelSerializer):
     category = EquipmentCategorySerializer(read_only=True)
@@ -31,6 +35,10 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
         source='availability',
         write_only=True
     )
+    condition = ConditionTypeSerializer(read_only=True)
+    condition_id = serializers.PrimaryKeyRelatedField(
+        queryset=ConditionType.objects.all(), source='condition', write_only=True
+    )
     photos = EquipmentPhotoSerializer(many=True, read_only=True)
 
     class Meta:
@@ -42,7 +50,3 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
     
-class ConditionTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ConditionType
-        fields = ['id', 'key', 'label']

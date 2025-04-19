@@ -17,14 +17,16 @@ class AvailabilityType(models.Model):
 
     def __str__(self):
         return self.name
+    
+class ConditionType(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    key = models.CharField(max_length=50, unique=True)  # 'new', 'gently_used', etc.
+    label = models.CharField(max_length=100)  # 'New', 'Gently Used', etc.
 
+    def __str__(self):
+        return self.label
 
 class EquipmentItem(models.Model):
-    class Condition(models.TextChoices):
-        NEW = 'new', 'New'
-        GENTLY_USED = 'gently_used', 'Gently Used'
-        NEEDS_REPAIR = 'needs_repair', 'Needs Minor Repairs'
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -39,7 +41,13 @@ class EquipmentItem(models.Model):
         null=True,
         related_name='items'
     )
-    condition = models.ForeignKey('ConditionType', on_delete=models.SET_NULL, null=True, related_name='items')
+    condition = models.ForeignKey(
+        ConditionType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='equipment_items'
+    )
     available_for = models.ManyToManyField(
         AvailabilityType,
         related_name='items',
@@ -66,11 +74,3 @@ class EquipmentPhoto(models.Model):
 
     def __str__(self):
         return f"Photo for {self.item.name}"
-
-class ConditionType(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    key = models.CharField(max_length=50, unique=True)  # 'new', 'gently_used', etc.
-    label = models.CharField(max_length=100)  # 'New', 'Gently Used', etc.
-
-    def __str__(self):
-        return self.label
