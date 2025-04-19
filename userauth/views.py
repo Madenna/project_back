@@ -630,30 +630,38 @@ class RegisterView(APIView):
         try:
             serializer = RegisterSerializer(data=request.data)
             if serializer.is_valid():
-                user = serializer.save()
-                # user.set_password(user.password)  # Hash password before saving
-                user.is_active = False  # User must verify email first
+                email = serializer.validated_data.get('email')
+
+                user, created = User.objects.get_or_create(email=email)
+                
+                if user.is_active:
+                    return Response({"error": "User already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+                user.set_password(serializer.validated_data.get('password'))
+                user.is_active = False
                 user.save()
 
-                #default profile image initially
                 Profile.objects.get_or_create(
-                    user=user, 
+                    user=user,
                     defaults={'profile_photo': settings.DEFAULT_PROFILE_PHOTO}
                 )
-                # Generate OTP and send verification email
+
                 otp_verification, _ = OTPVerification.objects.get_or_create(user=user)
                 otp_verification.generate_otp()
                 send_verification_email(user.email, otp_verification.otp_code)
 
-                return Response({"message": "OTP sent to email"}, status=status.HTTP_201_CREATED)
-            
+                if created:
+                    message = "User registered and OTP sent to email."
+                else:
+                    message = "User already exists. New OTP sent."
+
+                return Response({"message": message}, status=status.HTTP_201_CREATED)
+
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            print(f"🚨 ERROR: {str(e)}")  # Log error in console
+            print(f"🚨 ERROR: {str(e)}")
             return Response({"error": "Something went wrong on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-
 
 ### ✅ Login User ###
 class LoginView(APIView):
