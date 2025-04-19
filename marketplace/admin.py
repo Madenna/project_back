@@ -21,4 +21,4 @@ class EquipmentItemAdmin(admin.ModelAdmin):
 
 @admin.register(ConditionType)
 class ConditionTypeAdmin(admin.ModelAdmin):
-    list_display = ['key', 'label']
+    list_display = ['name']

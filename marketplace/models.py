@@ -20,9 +20,7 @@ class AvailabilityType(models.Model):
     
 class ConditionType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    key = models.CharField(max_length=50, unique=True)  # 'new', 'gently_used', etc.
-    label = models.CharField(max_length=100)  # 'New', 'Gently Used', etc.
-
+    name = models.CharField(max_length=100)  # 'New', 'Gently Used', etc.
     def __str__(self):
         return self.label
 

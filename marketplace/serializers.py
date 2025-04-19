@@ -21,30 +21,25 @@ class EquipmentPhotoSerializer(serializers.ModelSerializer):
 class ConditionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionType
-        fields = ['id', 'key', 'label']
+        fields = ['id', 'name']
 
 class EquipmentItemSerializer(serializers.ModelSerializer):
     category = EquipmentCategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=EquipmentCategory.objects.all(),
-        source='category',
-        write_only=True
+        queryset=EquipmentCategory.objects.all(), source='category', write_only=True
     )
     availability = AvailabilityTypeSerializer(many=True, read_only=True)
     availability_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=AvailabilityType.objects.all(),
-        source='availability',
+        #source='availability',
         write_only=True
     )
     condition = ConditionTypeSerializer(read_only=True)
     condition_id = serializers.PrimaryKeyRelatedField(
-        queryset=ConditionType.objects.all(),
-        source='condition',
-        write_only=True
+        queryset=ConditionType.objects.all(), source='condition', write_only=True
     )
     photos = EquipmentPhotoSerializer(many=True, read_only=True)
-
 
     class Meta:
         model = EquipmentItem
@@ -58,7 +53,14 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
 
     def create(self, validated_data):
-        availability_data = validated_data.pop('available_for', []) 
-        item = EquipmentItem.objects.create(**validated_data)  
-        item.available_for.set(availability_data)  
+        availability_data = validated_data.pop('availability_ids', [])
+        item = EquipmentItem.objects.create(**validated_data)
+        item.available_for.set(availability_data)
         return item
+
+    def update(self, instance, validated_data):
+        availability_data = validated_data.pop('availability_ids', None)
+        instance = super().update(instance, validated_data)
+        if availability_data is not None:
+            instance.available_for.set(availability_data)
+        return instance
