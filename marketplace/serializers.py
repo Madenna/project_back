@@ -17,7 +17,7 @@ class EquipmentPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipmentPhoto
         fields = ['id', 'image_url']
-        
+
 class ConditionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionType
@@ -26,7 +26,9 @@ class ConditionTypeSerializer(serializers.ModelSerializer):
 class EquipmentItemSerializer(serializers.ModelSerializer):
     category = EquipmentCategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=EquipmentCategory.objects.all(), source='category', write_only=True
+        queryset=EquipmentCategory.objects.all(),
+        source='category',
+        write_only=True
     )
     availability = AvailabilityTypeSerializer(many=True, read_only=True)
     availability_ids = serializers.PrimaryKeyRelatedField(
@@ -37,16 +39,20 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
     )
     condition = ConditionTypeSerializer(read_only=True)
     condition_id = serializers.PrimaryKeyRelatedField(
-        queryset=ConditionType.objects.all(), source='condition', write_only=True
+        queryset=ConditionType.objects.all(),
+        source='condition',
+        write_only=True
     )
     photos = EquipmentPhotoSerializer(many=True, read_only=True)
 
     class Meta:
         model = EquipmentItem
         fields = [
-            'id', 'name', 'description', 'category', 'category_id', 'condition',
-            'availability', 'availability_ids', 'location', 'contact_method',
-            'price', 'created_at', 'updated_at', 'photos'
+            'id', 'name', 'description', 'price', 'location', 'contact_method',
+            'category', 'category_id',
+            'condition', 'condition_id',
+            'availability', 'availability_ids',
+            'created_at', 'updated_at', 'photos'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
     

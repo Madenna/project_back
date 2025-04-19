@@ -16,7 +16,7 @@ class EquipmentPhotoAdmin(admin.ModelAdmin):
 @admin.register(EquipmentItem)
 class EquipmentItemAdmin(admin.ModelAdmin):
     list_display = ['name', 'owner', 'category', 'condition', 'location', 'created_at']
-    raw_id_fields = ['owner']
+    raw_id_fields = ['owner', 'condition']
     filter_horizontal = ['available_for']
 
 @admin.register(ConditionType)
