@@ -45,6 +45,7 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
     )
     photos = EquipmentPhotoSerializer(many=True, read_only=True)
 
+
     class Meta:
         model = EquipmentItem
         fields = [
@@ -55,4 +56,9 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at', 'photos'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
-    
+
+    def create(self, validated_data):
+        availability_data = validated_data.pop('available_for', []) 
+        item = EquipmentItem.objects.create(**validated_data)  
+        item.available_for.set(availability_data)  
+        return item
