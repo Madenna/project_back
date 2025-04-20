@@ -73,6 +73,11 @@ class PublicEquipmentListView(generics.ListAPIView):
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.AllowAny]
 
+class PublicEquipmentDetailView(generics.RetrieveAPIView):
+    queryset = EquipmentItem.objects.all()
+    serializer_class = EquipmentItemSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = 'id'
 
 class EquipmentCategoryListView(generics.ListAPIView):
     queryset = EquipmentCategory.objects.all().order_by('name')
