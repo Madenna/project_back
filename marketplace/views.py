@@ -95,43 +95,56 @@ class ConditionTypeListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
 class EquipmentPhotoUploadView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_description="Upload one or multiple photos (max 5) for an equipment item.",
         manual_parameters=[
             openapi.Parameter(
-                name='item_id',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                description='UUID of the EquipmentItem',
-                required=True
-            )
+                'item_id', openapi.IN_FORM, description="Equipment Item ID", type=openapi.TYPE_STRING, required=True
+            ),
         ],
+        operation_description="Upload multiple photos for an equipment item (max 5).",
         responses={201: EquipmentPhotoSerializer(many=True)}
     )
     def post(self, request, *args, **kwargs):
-        item_id = request.query_params.get('item_id')
-        if not item_id:
-            return Response({"error": "Item ID is required as query parameter."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            item_id = request.data.get('item_id')
+            if not item_id:
+                return Response({"error": "item_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            item = get_object_or_404(EquipmentItem, id=item_id)
 
-        equipment_item = get_object_or_404(EquipmentItem, id=item_id)
+            # Проверка владельца
+            if item.owner != request.user:
+                return Response({"error": "You can only upload photos for your own items."}, status=status.HTTP_403_FORBIDDEN)
 
-        if equipment_item.owner != request.user:
-            return Response({"error": "You do not have permission to upload photos for this item."}, status=status.HTTP_403_FORBIDDEN)
+            files = request.FILES.getlist('photos')
+            if not files:
+                return Response({"error": "No photos provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-        files = request.FILES.values()
+            if len(files) > 5:
+                return Response({"error": "Maximum 5 photos allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if len(files) > 5:
-            return Response({"error": "You can upload a maximum of 5 photos at a time."}, status=status.HTTP_400_BAD_REQUEST)
+            photo_instances = []
 
-        uploaded_photos = []
+            for file in files:
+                # Проверка типа файла
+                if not file.content_type.startswith('image/'):
+                    return Response({"error": f"Invalid file type: {file.content_type}. Only images are allowed."},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
-        for uploaded_file in files:
-            photo_url = upload_to_cloudinary(uploaded_file)
-            photo = EquipmentPhoto.objects.create(item=equipment_item, image_url=photo_url)
-            uploaded_photos.append(photo)
+                # Заливаем на Cloudinary
+                photo_url = upload_to_cloudinary(file)
 
-        serializer = EquipmentPhotoSerializer(uploaded_photos, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+                # Создаем запись в БД
+                photo = EquipmentPhoto.objects.create(item=item, image_url=photo_url)
+                photo_instances.append(photo)
+
+            serializer = EquipmentPhotoSerializer(photo_instances, many=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({"error": "Internal server error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
