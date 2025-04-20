@@ -6,6 +6,7 @@ from .views import (
     EquipmentCategoryListView,  
     AvailabilityTypeListView,
     ConditionTypeListView,
+    EquipmentPhotoUploadView
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("categories/", EquipmentCategoryListView.as_view(), name="equipment_category_list"),  
     path("availability-types/", AvailabilityTypeListView.as_view(), name="availability_type_list"),
     path("conditions/", ConditionTypeListView.as_view(), name="condition_type_list"), 
+    path("equipment-photos/", EquipmentPhotoUploadView.as_view(), name="upload_equipment_photo"),
 ]

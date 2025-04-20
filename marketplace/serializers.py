@@ -64,3 +64,8 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
         if availability_data is not None:
             instance.available_for.set(availability_data)
         return instance
+    
+class EquipmentPhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EquipmentPhoto
+        fields = ['id', 'image_url']
