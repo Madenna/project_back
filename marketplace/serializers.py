@@ -69,3 +69,4 @@ class EquipmentPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EquipmentPhoto
         fields = ['id', 'image_url']
+        ref_name = "MarketplaceEquipmentPhoto" 
