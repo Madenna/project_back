@@ -190,6 +190,7 @@ INSTALLED_APPS = [
     "symptom_tracker",
     "marketplace",
     "django_filters",
+    "komekai",
 ]
 
 # ✅ MIDDLEWARE CONFIGURATION
@@ -275,9 +276,11 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # Ensure it's correctly set
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  
 
-# ✅ CORS SETTINGS (Allow frontend to connect)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# CORS SETTINGS (Allow frontend to connect)
 CORS_ALLOWED_ORIGINS = [
     "https://balasteps-auth.web.app",
     "http://localhost:3000",

@@ -30,6 +30,7 @@ urlpatterns = [
     path('forum/', include('forum.urls')),
     path('symptoms/', include('symptom_tracker.urls')),
     path("marketplace/", include("marketplace.urls")),
+    path('api/komekai/', include('komekai.urls')),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
