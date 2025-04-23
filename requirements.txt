@@ -64,3 +64,4 @@ urllib3==2.3.0
 whitenoise==6.9.0
 yarl==1.18.3
 django-filter==25.1
+openai==1.76.0
