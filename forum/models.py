@@ -34,7 +34,7 @@ class Comment(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='forum_comments'  # ✅ Unique related_name
+        related_name='forum_comments'  
     )
 
     content = models.TextField()

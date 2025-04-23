@@ -43,8 +43,9 @@ class CommentCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(DiscussionPost, id=post_id)
-        serializer.save(user=self.request.user, post=post)
-
+        parent_id = self.request.data.get('parent_id')
+        parent = Comment.objects.filter(id=parent_id).first() if parent_id else None
+        serializer.save(user=self.request.user, post=post, parent=parent)
 
 class CategoryListView(generics.ListAPIView):
     queryset = DiscussionCategory.objects.all()
