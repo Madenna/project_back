@@ -6,17 +6,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer
-
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 openai.api_key = settings.OPENAI_API_KEY
 
 
 class ChatSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(responses={200: ChatSessionSerializer(many=True)})
     def get(self, request):
         sessions = ChatSession.objects.filter(user=request.user).order_by('-created_at')
         return Response(ChatSessionSerializer(sessions, many=True).data)
 
+    @swagger_auto_schema(responses={201: ChatSessionSerializer})
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)
         return Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
@@ -24,7 +27,21 @@ class ChatSessionListCreateView(APIView):
 
 class ChatMessageView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['message'],
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ),
+        responses={200: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'reply': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        )}
+    )
     def post(self, request, session_id):
         try:
             session = ChatSession.objects.get(id=session_id, user=request.user)
