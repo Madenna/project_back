@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,7 +8,8 @@ from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-openai.api_key = settings.OPENAI_API_KEY
+
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 class ChatSessionListCreateView(APIView):
@@ -27,6 +28,7 @@ class ChatSessionListCreateView(APIView):
 
 class ChatMessageView(APIView):
     permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -54,21 +56,21 @@ class ChatMessageView(APIView):
 
         ChatMessage.objects.create(session=session, sender="user", content=user_msg)
 
-        # Get all past messages
+        # История сообщений для отправки в OpenAI
         past_messages = [
             {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        # Get assistant response
-        response = openai.ChatCompletion.create(
+        # Запрос к OpenAI GPT-4
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Ты — заботливый ассистент платформы BalaSteps, помогаешь родителям особенных детей."}
             ] + past_messages
         )
 
-        reply = response.choices[0].message["content"]
+        reply = response.choices[0].message.content
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
         return Response({"reply": reply})
