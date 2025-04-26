@@ -65,7 +65,7 @@ class ChatMessageView(APIView):
         client = get_openai_client()
 
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Ты — заботливый ассистент платформы BalaSteps, помогаешь родителям особенных детей."}
             ] + past_messages
