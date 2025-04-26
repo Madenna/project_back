@@ -9,6 +9,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from openai import OpenAI
 
+# Function to initialize OpenAI client
 def get_openai_client():
     return OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -55,23 +56,26 @@ class ChatMessageView(APIView):
 
         ChatMessage.objects.create(session=session, sender="user", content=user_msg)
 
-        # Загружаем историю сообщений
+        # Gather history of past messages
         past_messages = [
             {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        # Получаем клиента OpenAI внутри запроса
+        # Get the OpenAI client
         client = get_openai_client()
 
+        # Send request to OpenAI with Markdown response request
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Ты — заботливый ассистент платформы BalaSteps, помогаешь родителям особенных детей."}
+                {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
+                {"role": "user", "content": user_msg}
             ] + past_messages
         )
 
-        reply = response.choices[0].message.content
+        # Get the reply content
+        reply = response.choices[0].message["content"]
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
         return Response({"reply": reply})
