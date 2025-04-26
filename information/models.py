@@ -52,6 +52,7 @@ class News(models.Model):
     photo = models.URLField(blank=True, null=True)  # Cloudinary URL
     tags = models.ManyToManyField(InfoTag, blank=True, related_name="news")
     created_at = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(max_length=255, blank=True, null=True) 
 
     def __str__(self):
         return self.title

@@ -132,5 +132,5 @@ class NewsSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'content', 'photo',
             'tags', 'tag_ids',
-            'created_at', 'comments'
+            'created_at', 'comments', 'source'
         ]
