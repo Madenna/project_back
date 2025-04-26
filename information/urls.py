@@ -1,18 +1,34 @@
 from django.urls import path
 from .views import (
-    InfoPostListView,
-    InfoPostCreateView,
-    InfoPostDetailView,
-    InfoCommentCreateView,
-    InfoCommentUpdateDeleteView,
-    ToggleLikeCommentView,
+    # Specialists
+    SpecialistListView,
+    SpecialistDetailView,
+    SpecialistCommentCreateView,
+
+    # Therapy Centers
+    TherapyCenterListView,
+    TherapyCenterDetailView,
+    TherapyCenterCommentCreateView,
+
+    # News
+    NewsListView,
+    NewsDetailView,
+    NewsCommentCreateView,
 )
 
 urlpatterns = [
-    path('infohub/', InfoPostListView.as_view(), name='infohub_list'),
-    path('infohub/create/', InfoPostCreateView.as_view(), name='infohub_create'),  
-    path('infohub/<uuid:id>/', InfoPostDetailView.as_view(), name='infohub_detail'),
-    path('infohub/<uuid:post_id>/comment/', InfoCommentCreateView.as_view(), name='infohub_comment'),
-    path('infohub/comment/<uuid:id>/', InfoCommentUpdateDeleteView.as_view(), name='comment_update_delete'),
-    path('infohub/comment/<uuid:comment_id>/like/', ToggleLikeCommentView.as_view(), name='toggle_like_comment'),
+    # --- Specialists ---
+    path('specialists/', SpecialistListView.as_view(), name='specialist_list'),
+    path('specialists/<uuid:id>/', SpecialistDetailView.as_view(), name='specialist_detail'),
+    path('specialists/<uuid:specialist_id>/comment/', SpecialistCommentCreateView.as_view(), name='specialist_comment_create'),
+
+    # --- Therapy Centers ---
+    path('centers/', TherapyCenterListView.as_view(), name='center_list'),
+    path('centers/<uuid:id>/', TherapyCenterDetailView.as_view(), name='center_detail'),
+    path('centers/<uuid:center_id>/comment/', TherapyCenterCommentCreateView.as_view(), name='center_comment_create'),
+
+    # --- News ---
+    path('news/', NewsListView.as_view(), name='news_list'),
+    path('news/<uuid:id>/', NewsDetailView.as_view(), name='news_detail'),
+    path('news/<uuid:news_id>/comment/', NewsCommentCreateView.as_view(), name='news_comment_create'),
 ]

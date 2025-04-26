@@ -17,27 +17,93 @@ class InfoCategory(models.Model):
     def __str__(self):
         return self.name
 
-class InfoPost(models.Model):
+class Specialist(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    photo = models.URLField(blank=True, null=True)  # Cloudinary URL
+    tags = models.ManyToManyField(InfoTag, blank=True, related_name="specialists")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    def average_rating(self):
+        ratings = self.specialist_comments.filter(rating__isnull=False)
+        if ratings.exists():
+            return round(ratings.aggregate(models.Avg('rating'))['rating__avg'], 2)
+        return None
+
+class TherapyCenter(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    address = models.CharField(max_length=255)
+    photo = models.URLField(blank=True, null=True)  # Cloudinary URL
+    tags = models.ManyToManyField(InfoTag, blank=True, related_name="therapy_centers")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    def average_rating(self):
+        ratings = self.center_comments.filter(rating__isnull=False)
+        if ratings.exists():
+            return round(ratings.aggregate(models.Avg('rating'))['rating__avg'], 2)
+        return None
+
+class News(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     content = models.TextField()
-    photo = models.URLField(blank=True, null=True)  # Using Cloudinary 
-    category = models.ForeignKey(InfoCategory, on_delete=models.CASCADE, related_name="posts")
-    tags = models.ManyToManyField(InfoTag, blank=True, related_name="info_posts")
+    photo = models.URLField(blank=True, null=True)  # Cloudinary URL
+    tags = models.ManyToManyField(InfoTag, blank=True, related_name="news")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.title
 
-class InfoComment(models.Model):
+# --- Specialist Comment Model ---
+
+class SpecialistComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    post = models.ForeignKey(InfoPost, on_delete=models.CASCADE, related_name="comments")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="info_comments")
+    specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE, related_name="specialist_comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="specialist_comments")
+    content = models.TextField()
+    rating = models.IntegerField(null=True, blank=True)  # 1-5 stars
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_specialist_comments', blank=True)
+
+    def __str__(self):
+        return f"Specialist Comment by {self.user.full_name} on {self.specialist.name}"
+
+# --- Therapy Center Comment Model ---
+
+class TherapyCenterComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    center = models.ForeignKey(TherapyCenter, on_delete=models.CASCADE, related_name="center_comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="center_comments")
+    content = models.TextField()
+    rating = models.IntegerField(null=True, blank=True)  # 1-5 stars
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_center_comments', blank=True)
+
+    def __str__(self):
+        return f"Center Comment by {self.user.full_name} on {self.center.name}"
+
+class NewsComment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    news = models.ForeignKey(News, on_delete=models.CASCADE, related_name="news_comments")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="news_comments")
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_info_comments', blank=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_news_comments', blank=True)
 
     def __str__(self):
-        return f"Comment by {self.user.full_name} on {self.post.title}"
+        return f"News Comment by {self.user.full_name} on {self.news.title}"

@@ -1,83 +1,141 @@
 from rest_framework import serializers
-from .models import InfoPost, InfoComment, InfoTag, InfoCategory
+from .models import (
+    Specialist, TherapyCenter, News,
+    SpecialistComment, TherapyCenterComment, NewsComment,
+    InfoTag, InfoCategory
+)
 from django.utils.timezone import localtime
 
 class InfoTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = InfoTag
         fields = ['id', 'name']
+
 class InfoCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = InfoCategory
         fields = ['id', 'name']
 
-class InfoCommentSerializer(serializers.ModelSerializer):
+class SpecialistCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     likes_count = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
 
     class Meta:
-        model = InfoComment
-        fields = ['id', 'user', 'content', 'created_at', 'updated_at', 'likes_count', 'replies']
+        model = SpecialistComment
+        fields = [
+            'id', 'user', 'content', 'rating',
+            'created_at', 'updated_at', 'likes_count', 'replies'
+        ]
     
     def get_likes_count(self, obj):
         return obj.likes.count()
 
     def get_replies(self, obj):
-        # Return nested replies (recursive)
-        return InfoCommentSerializer(obj.replies.all(), many=True).data
+        return SpecialistCommentSerializer(obj.replies.all(), many=True).data
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
 
-class InfoPostSerializer(serializers.ModelSerializer):
-    # Read-only nested serializers for GET
-    category = InfoCategorySerializer(read_only=True)
-    tags = InfoTagSerializer(many=True, read_only=True)
-    comments = InfoCommentSerializer(many=True, read_only=True)
+class TherapyCenterCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
 
-    # Write-only fields for POST/PUT
-    category_id = serializers.PrimaryKeyRelatedField(
-        queryset=InfoCategory.objects.all(), write_only=True, source='category'
-    )
+    class Meta:
+        model = TherapyCenterComment
+        fields = [
+            'id', 'user', 'content', 'rating',
+            'created_at', 'updated_at', 'likes_count', 'replies'
+        ]
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_replies(self, obj):
+        return TherapyCenterCommentSerializer(obj.replies.all(), many=True).data
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+
+class NewsCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NewsComment
+        fields = [
+            'id', 'user', 'content',
+            'created_at', 'updated_at', 'likes_count', 'replies'
+        ]
+    
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_replies(self, obj):
+        return NewsCommentSerializer(obj.replies.all(), many=True).data
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+
+
+class SpecialistSerializer(serializers.ModelSerializer):
+    tags = InfoTagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         queryset=InfoTag.objects.all(), many=True, write_only=True, source='tags'
     )
-
-    photo = serializers.URLField(required=False, allow_null=True)
+    comments = SpecialistCommentSerializer(many=True, read_only=True)
+    average_rating = serializers.SerializerMethodField()
 
     class Meta:
-        model = InfoPost
+        model = Specialist
         fields = [
-            'id',
-            'title',
-            'content',
-            'photo',
-            'created_at',
-            'category', 'category_id',
+            'id', 'name', 'description', 'photo',
             'tags', 'tag_ids',
-            'comments',
+            'created_at', 'comments', 'average_rating'
         ]
 
-# class InformationItemSerializer(serializers.ModelSerializer):
-#     tags = TagSerializer(many=True)
-#     comments = CommentSerializer(many=True, read_only=True)
-#     average_rating = serializers.SerializerMethodField()
+    def get_average_rating(self, obj):
+        return obj.average_rating()
 
-#     class Meta:
-#         model = InformationItem
-#         fields = ["id", "type", "title", "content", "image", "tags", "created_at", "comments", "average_rating"]
 
-#     def get_average_rating(self, obj):
-#         ratings = [comment.rating for comment in obj.comments.all()]
-#         return round(sum(ratings) / len(ratings), 2) if ratings else None
+class TherapyCenterSerializer(serializers.ModelSerializer):
+    tags = InfoTagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=InfoTag.objects.all(), many=True, write_only=True, source='tags'
+    )
+    comments = TherapyCenterCommentSerializer(many=True, read_only=True)
+    average_rating = serializers.SerializerMethodField()
 
-#     def create(self, validated_data):
-#         tags_data = validated_data.pop("tags", [])
-#         item = InformationItem.objects.create(**validated_data)
-#         for tag in tags_data:
-#             tag_obj, _ = Tag.objects.get_or_create(name=tag["name"])
-#             item.tags.add(tag_obj)
-#         return item
+    class Meta:
+        model = TherapyCenter
+        fields = [
+            'id', 'name', 'description', 'address', 'photo',
+            'tags', 'tag_ids',
+            'created_at', 'comments', 'average_rating'
+        ]
+
+    def get_average_rating(self, obj):
+        return obj.average_rating()
+
+class NewsSerializer(serializers.ModelSerializer):
+    tags = InfoTagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=InfoTag.objects.all(), many=True, write_only=True, source='tags'
+    )
+    comments = NewsCommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = News
+        fields = [
+            'id', 'title', 'content', 'photo',
+            'tags', 'tag_ids',
+            'created_at', 'comments'
+        ]

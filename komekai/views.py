@@ -1,16 +1,16 @@
-from openai import OpenAI
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .models import ChatSession, ChatMessage
-from .serializers import ChatSessionSerializer, ChatMessageSerializer
+from .serializers import ChatSessionSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from openai import OpenAI
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
+def get_openai_client():
+    return OpenAI(api_key=settings.OPENAI_API_KEY)
 
 class ChatSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -24,7 +24,6 @@ class ChatSessionListCreateView(APIView):
     def post(self, request):
         session = ChatSession.objects.create(user=request.user)
         return Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
-
 
 class ChatMessageView(APIView):
     permission_classes = [IsAuthenticated]
@@ -56,13 +55,15 @@ class ChatMessageView(APIView):
 
         ChatMessage.objects.create(session=session, sender="user", content=user_msg)
 
-        # История сообщений для отправки в OpenAI
+        # Загружаем историю сообщений
         past_messages = [
             {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        # Запрос к OpenAI GPT-4
+        # Получаем клиента OpenAI внутри запроса
+        client = get_openai_client()
+
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
