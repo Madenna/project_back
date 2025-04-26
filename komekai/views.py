@@ -74,8 +74,8 @@ class ChatMessageView(APIView):
             ] + past_messages
         )
 
-        # Get the reply content
-        reply = response.choices[0].message['content']
+        # Correct way to access the response content
+        reply = response.choices[0].message.content
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
         return Response({"reply": reply})
