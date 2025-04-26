@@ -1,17 +1,12 @@
 from django.contrib import admin
 from .models import (
-    InfoTag, InfoCategory,
+    InfoTag, 
     Specialist, TherapyCenter, News,
     SpecialistComment, TherapyCenterComment, NewsComment
 )
 
 @admin.register(InfoTag)
 class InfoTagAdmin(admin.ModelAdmin):
-    list_display = ['name']
-    search_fields = ['name']
-
-@admin.register(InfoCategory)
-class InfoCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 

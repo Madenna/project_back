@@ -70,7 +70,6 @@ class CommentDeleteView(generics.DestroyAPIView):
             raise PermissionDenied("You can delete only your own comments.")
         return obj
 
-
 class DiscussionPostDeleteView(generics.DestroyAPIView):
     queryset = DiscussionPost.objects.all()
     permission_classes = [permissions.IsAuthenticated]

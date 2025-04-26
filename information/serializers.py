@@ -2,18 +2,13 @@ from rest_framework import serializers
 from .models import (
     Specialist, TherapyCenter, News,
     SpecialistComment, TherapyCenterComment, NewsComment,
-    InfoTag, InfoCategory
+    InfoTag, 
 )
 from django.utils.timezone import localtime
 
 class InfoTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = InfoTag
-        fields = ['id', 'name']
-
-class InfoCategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = InfoCategory
         fields = ['id', 'name']
 
 class SpecialistCommentSerializer(serializers.ModelSerializer):

@@ -6,7 +6,7 @@ class ChatMessageInline(admin.TabularInline):
     model = ChatMessage
     extra = 0
     readonly_fields = ('sender', 'content', 'timestamp')
-    can_delete = False
+    can_delete = True  
     show_change_link = False
 
 class ChatSessionAdmin(admin.ModelAdmin):
@@ -15,6 +15,16 @@ class ChatSessionAdmin(admin.ModelAdmin):
     search_fields = ('title', 'user__username')
     inlines = [ChatMessageInline]
     readonly_fields = ('created_at',)
+    actions = ['delete_sessions']  
+
+    def delete_sessions(self, request, queryset):
+        """
+        Custom delete action for selected chat sessions.
+        """
+        count, _ = queryset.delete()  
+        self.message_user(request, f'{count} session(s) were deleted successfully.')
+
+    delete_sessions.short_description = "Delete selected chat sessions"
 
 class ChatMessageAdmin(admin.ModelAdmin):
     list_display = ('sender', 'content_short', 'session', 'timestamp')
