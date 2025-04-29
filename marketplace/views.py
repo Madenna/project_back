@@ -10,21 +10,17 @@ from drf_yasg import openapi
 from .models import EquipmentItem, EquipmentCategory, AvailabilityType, ConditionType, EquipmentPhoto
 from .serializers import EquipmentItemSerializer, EquipmentCategorySerializer, AvailabilityTypeSerializer, ConditionTypeSerializer, EquipmentPhotoSerializer
 
-
 class EquipmentItemListCreateView(generics.ListCreateAPIView):
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        # Ensuring the query returns only the logged-in user's items
         return EquipmentItem.objects.filter(owner=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        # Associate the item with the logged-in user when creating it
         item = serializer.save(owner=self.request.user)
 
-        # Handle photo uploads
         for file_key in self.request.FILES:
             uploaded_file = self.request.FILES[file_key]
             photo_url = upload_to_cloudinary(uploaded_file)
@@ -38,19 +34,16 @@ class EquipmentItemListCreateView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 
-
 class EquipmentItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
 
     def get_queryset(self):
-        # Ensuring only the logged-in user's items can be edited or deleted
         return EquipmentItem.objects.filter(owner=self.request.user)
 
     def perform_update(self, serializer):
         instance = serializer.instance
-        # Ensure only the owner can update their item
         if instance.owner != self.request.user:
             raise PermissionDenied("You can only edit your own items.")
         serializer.save()
@@ -72,16 +65,10 @@ class EquipmentItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
 
-
 class PublicEquipmentListView(generics.ListAPIView):
     queryset = EquipmentItem.objects.all().order_by('-created_at')
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.AllowAny]
-
-    @swagger_auto_schema(operation_description="List all equipment items for public view.")
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
 
 class PublicEquipmentDetailView(generics.RetrieveAPIView):
     queryset = EquipmentItem.objects.all()
@@ -89,20 +76,65 @@ class PublicEquipmentDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = 'id'
 
-
 class EquipmentCategoryListView(generics.ListAPIView):
     queryset = EquipmentCategory.objects.all().order_by('name')
     serializer_class = EquipmentCategorySerializer
     permission_classes = [permissions.AllowAny]
-
 
 class AvailabilityTypeListView(generics.ListAPIView):
     queryset = AvailabilityType.objects.all().order_by('name')
     serializer_class = AvailabilityTypeSerializer
     permission_classes = [permissions.AllowAny]
 
-
 class ConditionTypeListView(generics.ListAPIView):
     queryset = ConditionType.objects.all().order_by('name')
     serializer_class = ConditionTypeSerializer
     permission_classes = [permissions.AllowAny]
+
+import logging
+logger = logging.getLogger(__name__)  
+
+class EquipmentPhotoUploadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            item_id = request.query_params.get('item_id')
+            if not item_id:
+                logger.warning("Item ID not provided in query params.")
+                return Response({"error": "item_id is required in query parameters."}, status=status.HTTP_400_BAD_REQUEST)
+
+            item = get_object_or_404(EquipmentItem, id=item_id, owner=request.user)
+
+            photos = request.FILES.getlist('images')  # именно 'images'
+
+            if not photos:
+                logger.warning(f"No photos provided by user {request.user.email}.")
+                return Response({"error": "No photos provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if len(photos) > 5:
+                logger.warning(f"User {request.user.email} tried to upload {len(photos)} photos (limit is 5).")
+                return Response({"error": "You can upload a maximum of 5 photos."}, status=status.HTTP_400_BAD_REQUEST)
+
+            uploaded_photos = []
+
+            for photo in photos:
+                # Загрузка файла на Cloudinary
+                try:
+                    photo_url = upload_to_cloudinary(photo)
+                    EquipmentPhoto.objects.create(item=item, image_url=photo_url)
+                    uploaded_photos.append(photo_url)
+                    logger.info(f"Photo uploaded for item {item.id} by {request.user.email}: {photo_url}")
+                except Exception as e:
+                    logger.error(f"Failed to upload photo: {str(e)}")
+                    return Response({"error": "Failed to upload photo to cloud."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response({
+                "message": "Photos uploaded successfully.",
+                "photos": uploaded_photos
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.exception("Unexpected error while uploading photos.")
+            return Response({"error": "Internal server error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
