@@ -96,3 +96,14 @@ class ChatMessageView(APIView):
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
         return Response({"reply": reply})
+    
+class ChatSessionDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, session_id):
+        try:
+            session = ChatSession.objects.get(id=session_id, user=request.user)
+            session.delete()  
+            return Response({"message": "Chat session deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except ChatSession.DoesNotExist:
+            return Response({'error': 'Session not found or you do not have permission to delete it.'}, status=status.HTTP_404_NOT_FOUND)
