@@ -13,9 +13,11 @@ class SymptomEntryListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # Ensure the query only returns entries for the logged-in user's children
         return SymptomEntry.objects.filter(child__parent=self.request.user)
 
     def perform_create(self, serializer):
+        # Ensure the user can only create symptom entries for their own children
         child = serializer.validated_data['child']
         if child.parent != self.request.user:
             raise PermissionDenied("You can only add symptoms for your own child.")
@@ -43,6 +45,7 @@ class SymptomEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'id'
 
     def get_queryset(self):
+        # Ensure the query only returns entries for the logged-in user's children
         return SymptomEntry.objects.filter(child__parent=self.request.user)
 
     @swagger_auto_schema(
