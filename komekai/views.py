@@ -68,12 +68,23 @@ class ChatMessageView(APIView):
                 ] + past_messages  
             )
 
-            reply = response['choices'][0].get('message', {}).get('content', '')
-            ChatMessage.objects.create(session=session, sender="assistant", content=reply)
+            print("OpenAI Response:", response)  # Debugging line
 
-            return Response({"reply": reply})
+            # Ensure the 'choices' key exists in the response
+            if 'choices' in response and len(response['choices']) > 0:
+                reply = response['choices'][0].get('message', {}).get('content', '')
+                ChatMessage.objects.create(session=session, sender="assistant", content=reply)
+                return Response({"reply": reply})
+            else:
+                return Response({"error": "No choices returned from OpenAI."}, status=500)
+
+        except openai.error.OpenAIError as e:
+            # Handle OpenAI-specific errors
+            return Response({"error": f"OpenAI API error: {str(e)}"}, status=500)
+
         except Exception as e:
-            return Response({"error": f"Failed to get response from OpenAI: {str(e)}"}, status=500)
+            # Catch any other errors
+            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
 class ChatSessionDeleteView(APIView):
     permission_classes = [IsAuthenticated]
