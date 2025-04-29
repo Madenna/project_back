@@ -631,6 +631,7 @@ class RegisterView(APIView):
             serializer = RegisterSerializer(data=request.data)
             if serializer.is_valid():
                 email = serializer.validated_data['email']
+                full_name = serializer.validated_data['full_name']
                 password = serializer.validated_data['password']
 
                 user = User.objects.filter(email=email).first()
@@ -647,7 +648,12 @@ class RegisterView(APIView):
                         return Response({"message": "User already exists but not verified. New OTP sent."}, status=status.HTTP_200_OK)
                 else:
                     # User doesn't exist → create
-                    user = User.objects.create_user(email=email, password=password, is_active=False)
+                    user = User.objects.create_user(
+                        email=email, 
+                        full_name=full_name,  # Pass full_name here
+                        password=password, 
+                        is_active=False
+                    )
                     
                     # Default profile
                     Profile.objects.get_or_create(
