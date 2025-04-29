@@ -92,7 +92,7 @@ class SpecialistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialist
         fields = [
-            'id', 'name', 'description', 'photo',
+            'id', 'name', 'contact', 'description', 'photo',
             'tags', 'tag_ids',
             'created_at', 'comments', 'average_rating'
         ]

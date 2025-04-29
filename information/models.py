@@ -13,6 +13,7 @@ class InfoTag(models.Model):
 class Specialist(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
+    contact = models.CharField(max_length=15, null=True, blank=True)
     description = models.TextField()
     photo = models.URLField(blank=True, null=True)  # Cloudinary URL
     tags = models.ManyToManyField(InfoTag, blank=True, related_name="specialists")

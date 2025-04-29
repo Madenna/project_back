@@ -14,6 +14,7 @@ from rest_framework.views import APIView, Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from .utils import upload_to_cloudinary  
+
 class SpecialistListView(generics.ListAPIView):
     queryset = Specialist.objects.all().order_by('-created_at')
     serializer_class = SpecialistSerializer

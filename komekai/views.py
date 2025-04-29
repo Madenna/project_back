@@ -61,7 +61,7 @@ class ChatMessageView(APIView):
         ] + [{"role": "user", "content": user_msg}]
 
         # Get the OpenAI client and use the new method
-        response = openai.ChatCompletion.create(
+        response = openai.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},

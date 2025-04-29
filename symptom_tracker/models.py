@@ -13,3 +13,5 @@ class SymptomEntry(models.Model):
 
     def __str__(self):
         return f"{self.symptom_name} for {self.child.full_name} on {self.date}"
+    def get_queryset(self):
+        return SymptomEntry.objects.filter(child__parent=self.request.user)

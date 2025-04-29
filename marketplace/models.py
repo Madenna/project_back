@@ -2,14 +2,12 @@ from django.db import models
 from django.conf import settings
 import uuid
 
-
 class EquipmentCategory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
-
 
 class AvailabilityType(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -59,7 +57,6 @@ class EquipmentItem(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class EquipmentPhoto(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

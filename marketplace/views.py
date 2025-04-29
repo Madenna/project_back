@@ -16,6 +16,7 @@ class EquipmentItemListCreateView(generics.ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
+        print(f"Fetching items for user: {self.request.user}")
         return EquipmentItem.objects.filter(owner=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):

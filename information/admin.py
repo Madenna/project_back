@@ -12,8 +12,8 @@ class InfoTagAdmin(admin.ModelAdmin):
 
 @admin.register(Specialist)
 class SpecialistAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_at', 'display_average_rating']
-    search_fields = ['name', 'description']
+    list_display = ['name', 'contact', 'created_at', 'display_average_rating']
+    search_fields = ['name', 'contact', 'description']
     filter_horizontal = ['tags']
 
     def display_average_rating(self, obj):
