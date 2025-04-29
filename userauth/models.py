@@ -117,22 +117,20 @@ import random
 
 ### ✅ Custom User Manager ###
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, full_name, password=None):
+    def create_user(self, email, full_name, password=None, is_active=False):
         if not email:
             raise ValueError("Users must have an email address")
         
         email = self.normalize_email(email)
-        user = self.model(email=email, full_name=full_name)
+        user = self.model(email=email, full_name=full_name, is_active=is_active)
         user.set_password(password)
-        user.is_active = False  # Users must verify email first
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, full_name, password):
-        user = self.create_user(email=email, full_name=full_name, password=password)
+        user = self.create_user(email=email, full_name=full_name, password=password, is_active=True)
         user.is_staff = True
         user.is_superuser = True
-        user.is_active = True  # Superusers are active by default
         user.save(using=self._db)
         return user
 

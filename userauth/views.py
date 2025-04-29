@@ -664,11 +664,9 @@ class RegisterView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except ValueError as ve:
-            # Handle specific known exceptions
             print(f"🚨 ValueError: {str(ve)}")
             return Response({"error": f"ValueError: {str(ve)}"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            # General exception handler for unexpected errors
             print(f"🚨 ERROR: {str(e)}")
             return Response({"error": "Something went wrong on the server."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
