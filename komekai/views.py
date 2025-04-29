@@ -59,18 +59,21 @@ class ChatMessageView(APIView):
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",  
-            messages=[
-                {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
-                {"role": "user", "content": user_msg}
-            ] + past_messages 
-        )
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-3.5-turbo",  
+                messages=[
+                    {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
+                    {"role": "user", "content": user_msg}
+                ] + past_messages  
+            )
 
-        reply = response['choices'][0]['message']['content']
-        ChatMessage.objects.create(session=session, sender="assistant", content=reply)
+            reply = response['choices'][0]['message']['content']
+            ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
-        return Response({"reply": reply})
+            return Response({"reply": reply})
+        except Exception as e:
+            return Response({"error": f"Failed to get response from OpenAI: {str(e)}"}, status=500)
 
 class ChatSessionDeleteView(APIView):
     permission_classes = [IsAuthenticated]
