@@ -59,7 +59,7 @@ class ChatMessageView(APIView):
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-3.5-turbo",  
             messages=[
                 {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
