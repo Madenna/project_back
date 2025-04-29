@@ -26,23 +26,6 @@ class ChatSessionListCreateView(APIView):
         session = ChatSession.objects.create(user=request.user)
         return Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
-    @swagger_auto_schema(
-        operation_description="Delete a chat session by ID.",
-        responses={204: "Chat session deleted successfully."}
-    )
-    def delete(self, request, session_id):
-        """
-        Deletes a chat session by ID.
-        Only the user who created the session can delete it.
-        """
-        try:
-            # Check if the session exists and belongs to the current user
-            session = ChatSession.objects.get(id=session_id, user=request.user)
-            session.delete()  # Delete the session
-            return Response({"message": "Chat session deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
-        except ChatSession.DoesNotExist:
-            return Response({'error': 'Session not found or you do not have permission to delete it.'}, status=404)
-
 class ChatMessageView(APIView):
     permission_classes = [IsAuthenticated]
 
