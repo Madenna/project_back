@@ -66,7 +66,7 @@ class ChatMessageView(APIView):
         client = get_openai_client()
 
         # Send request to OpenAI with Markdown response request
-        response = client.chat.completions.create(
+        response = client.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
@@ -75,7 +75,7 @@ class ChatMessageView(APIView):
         )
 
         # Correct way to access the response content
-        reply = response.choices[0].message["content"]
+        reply = response['choices'][0]['message']['content']
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
         return Response({"reply": reply})
