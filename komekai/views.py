@@ -54,22 +54,19 @@ class ChatMessageView(APIView):
 
         ChatMessage.objects.create(session=session, sender="user", content=user_msg)
 
-        # Gather history of past messages
         past_messages = [
             {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
             for m in session.messages.all()
         ] + [{"role": "user", "content": user_msg}]
 
-        # Get the OpenAI client and use the new method
-        response = openai.completions.create(
-            model="gpt-3.5-turbo",
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  
             messages=[
                 {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
                 {"role": "user", "content": user_msg}
-            ] + past_messages
+            ] + past_messages 
         )
 
-        # Correct way to access the response content
         reply = response['choices'][0]['message']['content']
         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
 
