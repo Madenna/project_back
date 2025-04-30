@@ -8,8 +8,12 @@ from .serializers import ChatSessionSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import openai 
+from openai import OpenAI
 
 openai.api_key = settings.OPENAI_API_KEY  
+
+def get_openai_client():
+     return OpenAI(api_key=settings.OPENAI_API_KEY)
 
 class ChatSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -43,45 +47,37 @@ class ChatMessageView(APIView):
         )}
     )
     def post(self, request, session_id):
-        try:
-            session = ChatSession.objects.get(id=session_id, user=request.user)
-        except ChatSession.DoesNotExist:
-            return Response({'error': 'Session not found'}, status=404)
-
-        user_msg = request.data.get("message")
-        if not user_msg:
-            return Response({'error': 'Message is required'}, status=400)
-
-        ChatMessage.objects.create(session=session, sender="user", content=user_msg)
-
-        past_messages = [
-            {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
-            for m in session.messages.all()
-        ] + [{"role": "user", "content": user_msg}]
-
-        try:
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",  
-                messages=[
-                    {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
-                    {"role": "user", "content": user_msg}
-                ] + past_messages  
-            )
-
-            print("OpenAI Response:", response) 
-
-            if 'choices' in response and len(response['choices']) > 0:
-                reply = response['choices'][0]['message']['content']
-                ChatMessage.objects.create(session=session, sender="assistant", content=reply)
-                return Response({"reply": reply})
-            else:
-                return Response({"error": "No choices returned from OpenAI."}, status=500)
-
-        except openai.error.OpenAIError as e:
-            return Response({"error": f"OpenAI API error: {str(e)}"}, status=500)
-
-        except Exception as e:
-            return Response({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+         try:
+             session = ChatSession.objects.get(id=session_id, user=request.user)
+         except ChatSession.DoesNotExist:
+             return Response({'error': 'Session not found'}, status=404)
+ 
+         user_msg = request.data.get("message")
+         if not user_msg:
+             return Response({'error': 'Message is required'}, status=400)
+ 
+         ChatMessage.objects.create(session=session, sender="user", content=user_msg)
+ 
+         # Gather history of past messages
+         past_messages = [
+             {"role": "user" if m.sender == "user" else "assistant", "content": m.content}
+             for m in session.messages.all()
+         ] + [{"role": "user", "content": user_msg}]
+ 
+         # Get the OpenAI client
+         client = get_openai_client()
+ 
+         # Send request to OpenAI with Markdown response request
+         response = client.chat.completions.create(
+             model="gpt-3.5-turbo",
+             messages=[
+                 {"role": "system", "content": "Please respond using Markdown format, including headings, bullet points, bold text, etc."},
+                 {"role": "user", "content": user_msg}
+             ] + past_messages
+         )
+         reply = response.choices[0].message["content"]
+         ChatMessage.objects.create(session=session, sender="assistant", content=reply)
+         return Response({"reply": reply})
 
 class ChatSessionDeleteView(APIView):
     permission_classes = [IsAuthenticated]
