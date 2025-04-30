@@ -75,7 +75,7 @@ class ChatMessageView(APIView):
                  {"role": "user", "content": user_msg}
              ] + past_messages
          )
-         reply = response.choices[0].message["content"]
+         reply = response.choices[0].message.content
          ChatMessage.objects.create(session=session, sender="assistant", content=reply)
          return Response({"reply": reply})
 
