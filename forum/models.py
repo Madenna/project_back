@@ -15,7 +15,6 @@ class DiscussionPost(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="forum_posts")
     title = models.CharField(max_length=255)
     content = models.TextField()
-    #categories = models.ManyToManyField(DiscussionCategory, related_name="posts")
     category = models.ForeignKey(
         DiscussionCategory,
         on_delete=models.SET_NULL,

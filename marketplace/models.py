@@ -65,7 +65,7 @@ class EquipmentPhoto(models.Model):
         on_delete=models.CASCADE,
         related_name='photos'
     )
-    image_url = models.URLField()  # Assumes Cloudinary image URLs
+    image_url = models.URLField()  # Cloudinary image URLs
 
     def __str__(self):
         return f"Photo for {self.item.name}"
