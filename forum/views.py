@@ -106,11 +106,7 @@ class ReplyDeleteView(generics.DestroyAPIView):
         if reply.user != request.user:
             raise PermissionDenied("You can delete only your own replies.")
 
-        # If the comment is a reply, delete it
-        if reply.parent is not None:
-            return super().delete(request, *args, **kwargs)
-        else:
-            raise PermissionDenied("This is not a reply and cannot be deleted.")
+        return super().delete(request, *args, **kwargs)
 
 class CategoryListView(generics.ListAPIView):
     queryset = DiscussionCategory.objects.all()

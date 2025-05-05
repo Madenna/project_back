@@ -26,12 +26,12 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(Reply)
 class ReplyAdmin(admin.ModelAdmin):
-    list_display = ['user', 'comment', 'created_at', 'get_parent']
+    list_display = ['user', 'parent', 'created_at']  
     list_filter = ['created_at']
-    search_fields = ['content', 'user__full_name', 'comment__content']
-    raw_id_fields = ['comment', 'user']
+    search_fields = ['content', 'user__full_name', 'parent__content']  
+    raw_id_fields = ['parent', 'user']  
     ordering = ['created_at']
 
     def get_parent(self, obj):
-        return obj.comment if obj.comment else None
-    get_parent.short_description = 'Parent Comment'
+        return obj.parent if obj.parent else None
+    get_parent.short_description = 'Parent Comment'  

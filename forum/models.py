@@ -46,7 +46,7 @@ class Comment(models.Model):
 
 class Reply(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="replies")
+    parent = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="replies")
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
