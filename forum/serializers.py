@@ -10,10 +10,11 @@ class DiscussionCategorySerializer(serializers.ModelSerializer):
 class ReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     likes_count = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(queryset=Comment.objects.all(), required=False)  
 
     class Meta:
         model = Reply
-        fields = ['id', 'user', 'content', 'created_at', 'likes_count']
+        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
 
     def get_likes_count(self, obj):
         return obj.likes.count()

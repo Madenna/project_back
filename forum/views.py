@@ -92,7 +92,7 @@ class ReplyCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(Comment, id=comment_id)
-        serializer.save(user=self.request.user, comment=comment)
+        serializer.save(user=self.request.user, parent=comment)
     
 class ReplyDeleteView(generics.DestroyAPIView):
     queryset = Comment.objects.all()
