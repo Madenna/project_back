@@ -26,7 +26,7 @@ class ReplySerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     likes_count = serializers.SerializerMethodField()
-    replies = ReplySerializer(many=True, read_only=True)
+    replies = ReplySerializer(many=True, read_only=True)  # Replies for comment
 
     class Meta:
         model = Comment
@@ -39,6 +39,9 @@ class CommentSerializer(serializers.ModelSerializer):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
+    
+    def get_replies(self, obj):
+        return ReplySerializer(obj.replies.all(), many=True).data
     
 class DiscussionPostSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)

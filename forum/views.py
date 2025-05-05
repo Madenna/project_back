@@ -1,5 +1,5 @@
 from rest_framework import generics, permissions, status
-from .models import DiscussionPost, DiscussionCategory, Comment
+from .models import DiscussionPost, DiscussionCategory, Comment, Reply
 from .serializers import DiscussionPostSerializer, CommentSerializer, DiscussionCategorySerializer, ReplySerializer
 
 from django.shortcuts import get_object_or_404
@@ -58,6 +58,25 @@ class CommentCreateView(generics.CreateAPIView):
         # Create the comment or reply
         serializer.save(user=self.request.user, post=post, parent=parent)
 
+class ListCommentView(generics.ListAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(DiscussionPost, id=post_id)
+        return Comment.objects.filter(post=post).order_by('created_at')
+
+# List all replies for a specific comment
+class ListReplyView(generics.ListAPIView):
+    serializer_class = ReplySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        comment_id = self.kwargs.get('comment_id')
+        comment = get_object_or_404(Comment, id=comment_id)
+        return Reply.objects.filter(comment=comment).order_by('created_at')
+
 class ReplyCreateView(generics.CreateAPIView):
     serializer_class = ReplySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -66,6 +85,24 @@ class ReplyCreateView(generics.CreateAPIView):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(Comment, id=comment_id)
         serializer.save(user=self.request.user, comment=comment)
+    
+class ReplyDeleteView(generics.DestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    lookup_field = 'id'
+
+    def delete(self, request, *args, **kwargs):
+        reply = self.get_object()
+
+        # Check if the logged-in user is the author of the reply
+        if reply.user != request.user:
+            raise PermissionDenied("You can delete only your own replies.")
+
+        # If the comment is a reply, delete it
+        if reply.parent is not None:
+            return super().delete(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("This is not a reply and cannot be deleted.")
 
 class CategoryListView(generics.ListAPIView):
     queryset = DiscussionCategory.objects.all()
@@ -127,3 +164,27 @@ class ToggleLikeCommentView(APIView):
             comment.likes.add(request.user)
             liked = True
         return Response({"liked": liked, "likes_count": comment.likes.count()}, status=status.HTTP_200_OK)
+    
+class ToggleLikeReplyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Toggle like on a reply",
+        responses={200: openapi.Response("Like toggled", schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'liked': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                'likes_count': openapi.Schema(type=openapi.TYPE_INTEGER)
+            }
+        ))}
+    )
+    def post(self, request, reply_id):
+        reply = get_object_or_404(Reply, pk=reply_id)
+        if request.user in reply.likes.all():
+            reply.likes.remove(request.user)
+            liked = False
+        else:
+            reply.likes.add(request.user)
+            liked = True
+
+        return Response({"liked": liked, "likes_count": reply.likes.count()}, status=status.HTTP_200_OK)
