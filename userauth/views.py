@@ -355,7 +355,15 @@ class VerifyNewEmailView(APIView):
     
 class DeleteAccountView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-
+    @swagger_auto_schema(
+        operation_description="Delete user account by providing the current password",
+        request_body=DeleteAccountSerializer,
+        responses={
+            204: "Account deleted successfully",
+            400: "Bad Request, invalid password",
+            401: "Unauthorized, user not authenticated"
+        }
+    )
     def post(self, request):
         serializer = DeleteAccountSerializer(data=request.data, context={'request': request})
 
