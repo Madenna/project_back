@@ -1,6 +1,6 @@
 from rest_framework import generics, permissions, status
 from .models import DiscussionPost, DiscussionCategory, Comment
-from .serializers import DiscussionPostSerializer, CommentSerializer, DiscussionCategorySerializer
+from .serializers import DiscussionPostSerializer, CommentSerializer, DiscussionCategorySerializer, ReplySerializer
 
 from django.shortcuts import get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
@@ -43,9 +43,29 @@ class CommentCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(DiscussionPost, id=post_id)
+        
+        # If it's a reply, find the parent comment
         parent_id = self.request.data.get('parent_id')
-        parent = Comment.objects.filter(id=parent_id).first() if parent_id else None
+        parent = None
+        
+        # If parent_id exists, we are creating a reply and not a new comment
+        if parent_id:
+            parent = get_object_or_404(Comment, id=parent_id)
+            # Ensure parent is not itself a reply (just in case)
+            if parent.parent:
+                raise PermissionDenied("Replies can't be created for replies.")
+        
+        # Create the comment or reply
         serializer.save(user=self.request.user, post=post, parent=parent)
+
+class ReplyCreateView(generics.CreateAPIView):
+    serializer_class = ReplySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        comment_id = self.kwargs.get('comment_id')
+        comment = get_object_or_404(Comment, id=comment_id)
+        serializer.save(user=self.request.user, comment=comment)
 
 class CategoryListView(generics.ListAPIView):
     queryset = DiscussionCategory.objects.all()

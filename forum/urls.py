@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     DiscussionPostListCreateView, DiscussionPostDetailView,
-    CommentCreateView, CategoryListView, CommentDeleteView, DiscussionPostDeleteView, ToggleLikeCommentView,
+    CommentCreateView, CategoryListView, CommentDeleteView, DiscussionPostDeleteView, ToggleLikeCommentView, ReplyCreateView
 )
 
 urlpatterns = [
@@ -12,4 +12,5 @@ urlpatterns = [
     path('comments/<uuid:pk>/delete/', CommentDeleteView.as_view(), name='delete_comment'),
     path('posts/<uuid:pk>/delete/', DiscussionPostDeleteView.as_view(), name='delete_post'),
     path('comments/<uuid:pk>/like/', ToggleLikeCommentView.as_view(), name='toggle_like'),
+    path('comments/<uuid:comment_id>/replies/', ReplyCreateView.as_view(), name='create_reply'),
 ]
