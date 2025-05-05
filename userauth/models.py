@@ -24,15 +24,14 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-
 #User Model
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     full_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)  # ✅ Email-based authentication
-    temp_email = models.EmailField(blank=True, null=True, unique=True)  # ✅ For email change requests
+    email = models.EmailField(unique=True)  # Email-based authentication
+    temp_email = models.EmailField(blank=True, null=True, unique=True)  # For email change requests
     password = models.CharField(max_length=255)
-    is_active = models.BooleanField(default=False)  # ✅ Users must verify email first
+    is_active = models.BooleanField(default=False)  # Users must verify email first
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
 
@@ -43,7 +42,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.full_name
-
 
 #Profile Model 
 class Profile(models.Model):
@@ -60,7 +58,6 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.full_name}'s Profile"
 
-
 #OTP Verification Model (For Email Verification) 
 class OTPVerification(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -68,20 +65,20 @@ class OTPVerification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def generate_otp(self):
-        """Generates a 6-digit OTP and saves it."""
+        #Generates a 6-digit OTP and saves it
         self.otp_code = str(random.randint(100000, 999999))
         self.created_at = timezone.now()  # Ensure OTP timestamp is updated
         self.save()
 
     def is_expired(self):
-        """Check if OTP is expired (10 minutes limit)"""
+        #Check if OTP is expired (10 minutes limit)
         return (timezone.now() - self.created_at).total_seconds() > 600  # 600 seconds = 10 minutes
 
     def __str__(self):
         return f"OTP for {self.user.email}"
     
 class Diagnosis(models.Model):
-    """✅ Stores each diagnosis separately, allowing multiple diagnoses per child."""
+    #Stores each diagnosis separately, allowing multiple diagnoses per child
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True) 
 

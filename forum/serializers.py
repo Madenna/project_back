@@ -7,9 +7,8 @@ class DiscussionCategorySerializer(serializers.ModelSerializer):
         model = DiscussionCategory
         fields = ['id', 'name']
 
-
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)  # Shows full_name of user
+    user = serializers.StringRelatedField(read_only=True) 
 
     class Meta:
         model = Comment
@@ -49,7 +48,6 @@ class ReplySerializer(serializers.ModelSerializer):
     
 class DiscussionPostSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    #categories = DiscussionCategorySerializer(many=True)
     category = serializers.SlugRelatedField(
         slug_field='name',
         queryset=DiscussionCategory.objects.all()
