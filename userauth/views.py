@@ -12,7 +12,7 @@ from rest_framework import serializers
 from rest_framework.decorators import api_view
 from .serializers import (
     UserSerializer, LoginSerializer, RegisterSerializer, OTPVerificationSerializer, VerifyNewEmailSerializer,
-    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, ChildSerializer
+    PasswordResetSerializer, ProfileSerializer, EmailVerificationSerializer, ChildSerializer, DeleteAccountSerializer
 )
 from .models import OTPVerification, Profile, Child, Diagnosis
 from .utils import send_verification_email, generate_otp
@@ -352,3 +352,16 @@ class VerifyNewEmailView(APIView):
             return Response({"message": "Email updated successfully."}, status=200)
 
         return Response(serializer.errors, status=400)
+    
+class DeleteAccountView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = DeleteAccountSerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            # Call delete_account method if validation passes
+            serializer.delete_account()
+            return Response({"message": "Account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

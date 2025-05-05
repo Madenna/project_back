@@ -95,7 +95,6 @@ class VerifyNewEmailSerializer(serializers.Serializer):
         except OTPVerification.DoesNotExist:
             raise serializers.ValidationError("Invalid OTP or email.")
 
-#User Serializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -209,3 +208,25 @@ class ChildSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class DeleteAccountSerializer(serializers.Serializer):
+    # The user needs to provide their password for confirmation
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context.get("request").user
+        password = attrs.get("password")
+
+        # Check if the password matches the current user's password
+        if not user.check_password(password):
+            raise serializers.ValidationError("Incorrect password. Please try again.")
+        
+        return attrs
+
+    def delete_account(self):
+        user = self.context.get("request").user
+        user.delete()  # Deletes the user from the database
