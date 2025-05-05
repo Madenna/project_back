@@ -95,9 +95,8 @@ class ReplyCreateView(generics.CreateAPIView):
         serializer.save(user=self.request.user, parent=comment)
     
 class ReplyDeleteView(generics.DestroyAPIView):
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
-    lookup_field = 'id'
+    queryset = Reply.objects.all()
+    serializer_class = ReplySerializer
 
     def delete(self, request, *args, **kwargs):
         reply = self.get_object()

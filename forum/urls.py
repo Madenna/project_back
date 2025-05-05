@@ -14,7 +14,7 @@ urlpatterns = [
     path('comments/<uuid:pk>/like/', ToggleLikeCommentView.as_view(), name='toggle_like_comment'),
     path('comments/replies/<uuid:reply_id>/like/', ToggleLikeReplyView.as_view(), name='toggle_like_reply'),
     path('comments/<uuid:comment_id>/replies/', ReplyCreateView.as_view(), name='create_reply'),
-    path('replies/<uuid:id>/delete/', ReplyDeleteView.as_view(), name='delete_reply'),
+    path('replies/<uuid:pk>/delete/', ReplyDeleteView.as_view(), name='delete_reply'),
     path('posts/<uuid:post_id>/comments/', ListCommentView.as_view(), name='list_comments'),
     path('comments/<uuid:comment_id>/replies/', ListReplyView.as_view(), name='list_replies'),
 ]
