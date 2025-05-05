@@ -62,6 +62,10 @@ class ListCommentView(generics.ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_description="Retrieve comments for a specific post")
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
     def get_queryset(self):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(DiscussionPost, id=post_id)
@@ -72,6 +76,10 @@ class ListReplyView(generics.ListAPIView):
     serializer_class = ReplySerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(operation_description="Retrieve replies for a specific comment")
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+    
     def get_queryset(self):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(Comment, id=comment_id)
