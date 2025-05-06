@@ -24,7 +24,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 if not SECRET_KEY:
     raise Exception("❌ DJANGO_SECRET_KEY is not set in environment variables!")
 DEBUG = os.getenv("DEBUG", "False") == "False"
-ALLOWED_HOSTS = ['https://balasteps.onrender.com', 'https://project-back-81mh.onrender.com', '127.0.0.1:8000']  
+ALLOWED_HOSTS = ['balasteps.onrender.com', 'project-back-81mh.onrender.com', '127.0.0.1:8000']  
 
 # INSTALLED APPS
 INSTALLED_APPS = [
