@@ -140,7 +140,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CORS_ALLOWED_ORIGINS = [
     "https://balasteps-auth.web.app",
     "http://localhost:3000",
-    "https://balasteps.onrender.com"
+    "https://balasteps.onrender.com", 
+    "https://project-back-81mh.onrender.com"
 ]
 
 # DRF CONFIGURATION
