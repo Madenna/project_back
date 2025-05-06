@@ -24,7 +24,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 if not SECRET_KEY:
     raise Exception("❌ DJANGO_SECRET_KEY is not set in environment variables!")
 DEBUG = os.getenv("DEBUG", "False") == "False"
-ALLOWED_HOSTS = ["*"]  # ❗ Consider restricting this in production
+ALLOWED_HOSTS = ['https://balasteps.onrender.com', 'https://project-back-81mh.onrender.com', '127.0.0.1:8000']  
 
 # INSTALLED APPS
 INSTALLED_APPS = [
@@ -140,6 +140,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 CORS_ALLOWED_ORIGINS = [
     "https://balasteps-auth.web.app",
     "http://localhost:3000",
+    "https://balasteps.onrender.com"
 ]
 
 # DRF CONFIGURATION
