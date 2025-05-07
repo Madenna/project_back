@@ -55,19 +55,8 @@ class SpecialistCommentCreateView(generics.CreateAPIView):
         specialist_id = self.kwargs.get('specialist_id')
         specialist = get_object_or_404(Specialist, id=specialist_id)
         
-        # If it's a reply, find the parent comment
-        parent_id = self.request.data.get('parent_id')
-        parent = None
-        
-        # If parent_id exists, we are creating a reply and not a new comment
-        if parent_id:
-            parent = get_object_or_404(SpecialistComment, id=parent_id)
-            # Ensure parent is not itself a reply (just in case)
-            if parent.parent:
-                raise PermissionDenied("Replies can't be created for replies.")
-        
         # Create the comment or reply
-        serializer.save(user=self.request.user, specialist=specialist, parent=parent)
+        serializer.save(user=self.request.user, specialist=specialist)
 
 class SpecialistCommentDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -171,19 +160,8 @@ class TherapyCenterCommentCreateView(generics.CreateAPIView):
         center_id = self.kwargs.get('center_id')
         center = get_object_or_404(TherapyCenter, id=center_id)
         
-        # If it's a reply, find the parent comment
-        parent_id = self.request.data.get('parent_id')
-        parent = None
-        
-        # If parent_id exists, we are creating a reply and not a new comment
-        if parent_id:
-            parent = get_object_or_404(TherapyCenterComment, id=parent_id)
-            # Ensure parent is not itself a reply (just in case)
-            if parent.parent:
-                raise PermissionDenied("Replies can't be created for replies.")
-        
         # Create the comment or reply
-        serializer.save(user=self.request.user, center=center, parent=parent)
+        serializer.save(user=self.request.user, center=center)
 
 class TherapyCenterCommentDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -287,19 +265,8 @@ class NewsCommentCreateView(generics.CreateAPIView):
         news_id = self.kwargs.get('specialist_id')
         news = get_object_or_404(News, id=news_id)
         
-        # If it's a reply, find the parent comment
-        parent_id = self.request.data.get('parent_id')
-        parent = None
-        
-        # If parent_id exists, we are creating a reply and not a new comment
-        if parent_id:
-            parent = get_object_or_404(NewsComment, id=parent_id)
-            # Ensure parent is not itself a reply (just in case)
-            if parent.parent:
-                raise PermissionDenied("Replies can't be created for replies.")
-        
         # Create the comment or reply
-        serializer.save(user=self.request.user, news=news, parent=parent)
+        serializer.save(user=self.request.user, news=news)
 
 class NewsCommentDeleteView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]

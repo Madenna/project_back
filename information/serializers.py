@@ -11,25 +11,6 @@ class InfoTagSerializer(serializers.ModelSerializer):
         model = InfoTag
         fields = ['id', 'name']
 
-class SpecialistCommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
-    replies = serializers.SerializerMethodField()
-
-    class Meta:
-        model = SpecialistComment
-        fields = [
-            'id', 'user', 'content', 'rating',
-            'created_at', 'updated_at', 'replies'
-        ]
-
-    def get_replies(self, obj):
-        return SpecialistReplySerializer(obj.replies.all(), many=True).data
-
-    def to_representation(self, instance):
-        rep = super().to_representation(instance)
-        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
-        return rep
-
 class SpecialistReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     parent = serializers.PrimaryKeyRelatedField(queryset=SpecialistComment.objects.all(), required=False)  
@@ -43,19 +24,16 @@ class SpecialistReplySerializer(serializers.ModelSerializer):
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
     
-class TherapyCenterCommentSerializer(serializers.ModelSerializer):
+class SpecialistCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    replies = serializers.SerializerMethodField()
+    replies = SpecialistReplySerializer(many=True, read_only=True)
 
     class Meta:
-        model = TherapyCenterComment
+        model = SpecialistComment
         fields = [
             'id', 'user', 'content', 'rating',
             'created_at', 'updated_at', 'replies'
         ]
-    
-    def get_replies(self, obj):
-        return TherapyCenterCommentSerializer(obj.replies.all(), many=True).data
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -74,26 +52,23 @@ class TherapyCenterReplySerializer(serializers.ModelSerializer):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
-
-class NewsCommentSerializer(serializers.ModelSerializer):
+    
+class TherapyCenterCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    replies = serializers.SerializerMethodField()
+    replies = TherapyCenterReplySerializer(many=True, read_only=True)
 
     class Meta:
-        model = NewsComment
+        model = TherapyCenterComment
         fields = [
-            'id', 'user', 'content',
+            'id', 'user', 'content', 'rating',
             'created_at', 'updated_at', 'replies'
         ]
     
-    def get_replies(self, obj):
-        return NewsCommentSerializer(obj.replies.all(), many=True).data
-
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
-
+    
 class NewsReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     parent = serializers.PrimaryKeyRelatedField(queryset=NewsComment.objects.all(), required=False)  
@@ -101,6 +76,22 @@ class NewsReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = NewsReply
         fields = ['id', 'user', 'content', 'created_at', 'parent']
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+
+class NewsCommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    replies = NewsReplySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = NewsComment
+        fields = [
+            'id', 'user', 'content',
+            'created_at', 'updated_at', 'replies'
+        ]
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)

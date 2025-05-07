@@ -1,92 +1,91 @@
 from django.contrib import admin
 from .models import (
     InfoTag, Specialist, TherapyCenter, News,
-    SpecialistComment, SpecialistReply, TherapyCenterComment, TherapyCenterReply, NewsComment, NewsReply
+    SpecialistComment, SpecialistReply, TherapyCenterComment,
+    TherapyCenterReply, NewsComment, NewsReply
 )
+from django.utils.html import format_html
 
-# InfoTag Admin
-@admin.register(InfoTag)
-class InfoTagAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
-    search_fields = ('name',)
 
-# Specialist Admin
-@admin.register(Specialist)
-class SpecialistAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'contact', 'created_at', 'average_rating')  
-    search_fields = ('name', 'description')
-    list_filter = ('created_at', 'tags')
-    ordering = ('-created_at',)
+# Customizing admin for SpecialistComment, SpecialistReply, etc.
 
-# TherapyCenter Admin
-@admin.register(TherapyCenter)
-class TherapyCenterAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'address', 'created_at', 'average_rating')  
-    search_fields = ('name', 'description', 'address')
-    list_filter = ('created_at', 'tags')
-    ordering = ('-created_at',)
-
-# News Admin
-@admin.register(News)
-class NewsAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'content', 'created_at', 'source')
-    search_fields = ('title', 'content', 'source')
-    list_filter = ('created_at', 'tags')
-    ordering = ('-created_at',)
-
-# SpecialistComment Admin
-@admin.register(SpecialistComment)
 class SpecialistCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'specialist', 'user', 'content', 'created_at', 'rating', 'parent')  
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'specialist', 'rating')
-    ordering = ('-created_at',)
+    list_display = ['user', 'specialist', 'content', 'rating', 'created_at', 'updated_at']
+    list_filter = ['specialist', 'created_at']
+    search_fields = ['user__username', 'specialist__name']
 
-# SpecialistReply Admin
-@admin.register(SpecialistReply)
+
 class SpecialistReplyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'comment_content', 'user', 'content', 'created_at')
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'parent__specialist')
-    ordering = ('-created_at',)
+    list_display = ['user', 'parent', 'content', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__username', 'parent__content']
 
-    def comment_content(self, obj):
-        return obj.parent.content 
+    def parent(self, obj):
+        return obj.parent  # This will show the parent comment if it exists
+    parent.short_description = 'Parent Comment'
 
-# TherapyCenterComment Admin
-@admin.register(TherapyCenterComment)
+
 class TherapyCenterCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'center', 'user', 'content', 'created_at', 'rating', 'parent')
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'center', 'rating')
-    ordering = ('-created_at',)
+    list_display = ['user', 'center', 'content', 'rating', 'created_at', 'updated_at']
+    list_filter = ['center', 'created_at']
+    search_fields = ['user__username', 'center__name']
 
-# TherapyCenterReply Admin
-@admin.register(TherapyCenterReply)
+
 class TherapyCenterReplyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'comment_content', 'user', 'content', 'created_at')
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'parent__center')
-    ordering = ('-created_at',)
+    list_display = ['user', 'parent', 'content', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__username', 'parent__content']
 
-    def comment_content(self, obj):
-        return obj.parent.content  
+    def parent(self, obj):
+        return obj.parent  # This will show the parent comment if it exists
+    parent.short_description = 'Parent Comment'
 
-# NewsComment Admin
-@admin.register(NewsComment)
+
 class NewsCommentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'news', 'user', 'content', 'created_at', 'parent')
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'news')
-    ordering = ('-created_at',)
+    list_display = ['user', 'news', 'content', 'created_at', 'updated_at']
+    list_filter = ['news', 'created_at']
+    search_fields = ['user__username', 'news__title']
 
-# NewsReply Admin
-@admin.register(NewsReply)
+
 class NewsReplyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'comment_content', 'user', 'content', 'created_at')
-    search_fields = ('content', 'user__username')
-    list_filter = ('created_at', 'parent__news')
-    ordering = ('-created_at',)
+    list_display = ['user', 'parent', 'content', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__username', 'parent__content']
 
-    def comment_content(self, obj):
-        return obj.parent.content  
+    def parent(self, obj):
+        return obj.parent  # This will show the parent comment if it exists
+    parent.short_description = 'Parent Comment'
+
+
+# Admin for other models
+class InfoTagAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+
+class SpecialistAdmin(admin.ModelAdmin):
+    list_display = ['name', 'contact', 'created_at', 'average_rating']
+    search_fields = ['name', 'contact']
+    list_filter = ['created_at']
+
+class TherapyCenterAdmin(admin.ModelAdmin):
+    list_display = ['name', 'address', 'created_at', 'average_rating']
+    search_fields = ['name', 'address']
+    list_filter = ['created_at']
+
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ['title', 'created_at', 'source']
+    search_fields = ['title', 'content']
+    list_filter = ['created_at']
+
+
+# Register the models with their custom admin classes
+admin.site.register(InfoTag, InfoTagAdmin)
+admin.site.register(Specialist, SpecialistAdmin)
+admin.site.register(TherapyCenter, TherapyCenterAdmin)
+admin.site.register(News, NewsAdmin)
+admin.site.register(SpecialistComment, SpecialistCommentAdmin)
+admin.site.register(SpecialistReply, SpecialistReplyAdmin)
+admin.site.register(TherapyCenterComment, TherapyCenterCommentAdmin)
+admin.site.register(TherapyCenterReply, TherapyCenterReplyAdmin)
+admin.site.register(NewsComment, NewsCommentAdmin)
+admin.site.register(NewsReply, NewsReplyAdmin)

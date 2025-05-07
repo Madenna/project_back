@@ -66,7 +66,6 @@ class SpecialistComment(models.Model):
     rating = models.IntegerField(null=True, blank=True)  # 1-5 stars
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return f"Specialist Comment by {self.user.full_name} on {self.specialist.name}"
@@ -96,7 +95,6 @@ class TherapyCenterComment(models.Model):
     rating = models.IntegerField(null=True, blank=True)  # 1-5 stars
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return f"Center Comment by {self.user.full_name} on {self.center.name}"
@@ -125,7 +123,6 @@ class NewsComment(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
 
     def __str__(self):
         return f"News Comment by {self.user.full_name} on {self.news.title}"

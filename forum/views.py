@@ -41,19 +41,8 @@ class CommentCreateView(generics.CreateAPIView):
         post_id = self.kwargs.get('post_id')
         post = get_object_or_404(DiscussionPost, id=post_id)
         
-        # If it's a reply, find the parent comment
-        parent_id = self.request.data.get('parent_id')
-        parent = None
-        
-        # If parent_id exists, we are creating a reply and not a new comment
-        if parent_id:
-            parent = get_object_or_404(Comment, id=parent_id)
-            # Ensure parent is not itself a reply (just in case)
-            if parent.parent:
-                raise PermissionDenied("Replies can't be created for replies.")
-        
         # Create the comment or reply
-        serializer.save(user=self.request.user, post=post, parent=parent)
+        serializer.save(user=self.request.user, post=post)
 
 class ListCommentView(generics.ListAPIView):
     serializer_class = CommentSerializer
@@ -140,7 +129,6 @@ class DiscussionPostDeleteView(generics.DestroyAPIView):
         if post.user != self.request.user:
             raise PermissionDenied("You can delete only your own posts.")
         return post
-
 
 class ToggleLikeCommentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
