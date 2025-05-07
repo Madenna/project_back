@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Specialist, TherapyCenter, News,
     SpecialistComment, TherapyCenterComment, NewsComment,
-    InfoTag, 
+    InfoTag, NewsReply, SpecialistReply, TherapyCenterReply
 )
 from django.utils.timezone import localtime
 
@@ -27,13 +27,30 @@ class SpecialistCommentSerializer(serializers.ModelSerializer):
         return obj.likes.count()
 
     def get_replies(self, obj):
-        return SpecialistCommentSerializer(obj.replies.all(), many=True).data
+        return SpecialistReplySerializer(obj.replies.all(), many=True).data
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
 
+class SpecialistReplySerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(queryset=SpecialistComment.objects.all(), required=False)  
+
+    class Meta:
+        model = SpecialistReply
+        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+    
 class TherapyCenterCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     likes_count = serializers.SerializerMethodField()
@@ -51,6 +68,23 @@ class TherapyCenterCommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, obj):
         return TherapyCenterCommentSerializer(obj.replies.all(), many=True).data
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
+    
+class TherapyCenterReplySerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(queryset=TherapyCenterComment.objects.all(), required=False)  
+
+    class Meta:
+        model = TherapyCenterReply
+        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -80,6 +114,22 @@ class NewsCommentSerializer(serializers.ModelSerializer):
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
 
+class NewsReplySerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(queryset=NewsComment.objects.all(), required=False)  
+
+    class Meta:
+        model = NewsReply
+        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
+        return rep
 
 class SpecialistSerializer(serializers.ModelSerializer):
     tags = InfoTagSerializer(many=True, read_only=True)

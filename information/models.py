@@ -58,8 +58,6 @@ class News(models.Model):
     def __str__(self):
         return self.title
 
-# --- Specialist Comment Model ---
-
 class SpecialistComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     specialist = models.ForeignKey(Specialist, on_delete=models.CASCADE, related_name="specialist_comments")
@@ -73,8 +71,24 @@ class SpecialistComment(models.Model):
 
     def __str__(self):
         return f"Specialist Comment by {self.user.full_name} on {self.specialist.name}"
+    
+class SpecialistReply(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    parent = models.ForeignKey(SpecialistComment, on_delete=models.CASCADE, related_name="specialist_replies")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='specialist_replies'
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_specialist_replies", blank=True)
 
-# --- Therapy Center Comment Model ---
+    def __str__(self):
+        return f"Reply by {self.user.full_name} on specialist comment {self.comment.id}"
+
+    class Meta:
+        ordering = ['created_at']
 
 class TherapyCenterComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -90,6 +104,24 @@ class TherapyCenterComment(models.Model):
     def __str__(self):
         return f"Center Comment by {self.user.full_name} on {self.center.name}"
 
+class TherapyCenterReply(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    parent = models.ForeignKey(TherapyCenterComment, on_delete=models.CASCADE, related_name="center_replies")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='center_replies'
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_center_replies", blank=True)
+
+    def __str__(self):
+        return f"Reply by {self.user.full_name} on therapy center comment {self.comment.id}"
+
+    class Meta:
+        ordering = ['created_at']
+
 class NewsComment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     news = models.ForeignKey(News, on_delete=models.CASCADE, related_name="news_comments")
@@ -102,3 +134,21 @@ class NewsComment(models.Model):
 
     def __str__(self):
         return f"News Comment by {self.user.full_name} on {self.news.title}"
+
+class NewsReply(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    parent = models.ForeignKey(NewsComment, on_delete=models.CASCADE, related_name="news_replies")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='news_replies'
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_news_replies", blank=True)
+
+    def __str__(self):
+        return f"Reply by {self.user.full_name} on news comment {self.comment.id}"
+
+    class Meta:
+        ordering = ['created_at']

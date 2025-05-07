@@ -8,7 +8,6 @@ from drf_yasg import openapi
 from rest_framework.views import APIView, Response
 from rest_framework.exceptions import PermissionDenied
 
-
 class DiscussionPostListCreateView(generics.ListCreateAPIView):
     queryset = DiscussionPost.objects.all().order_by('-created_at')
     serializer_class = DiscussionPostSerializer
@@ -21,7 +20,6 @@ class DiscussionPostListCreateView(generics.ListCreateAPIView):
     def get_serializer_context(self):
         return {"request": self.request}
 
-
 class DiscussionPostDetailView(generics.RetrieveAPIView):
     queryset = DiscussionPost.objects.all()
     serializer_class = DiscussionPostSerializer
@@ -30,7 +28,6 @@ class DiscussionPostDetailView(generics.RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
 
 class CommentCreateView(generics.CreateAPIView):
     serializer_class = CommentSerializer
