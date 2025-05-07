@@ -313,7 +313,7 @@ class NewsReplyCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        comment_id = self.kwargs.get('news_id')
+        comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(NewsComment, id=comment_id)
         serializer.save(user=self.request.user, parent=comment)
     
