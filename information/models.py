@@ -67,7 +67,6 @@ class SpecialistComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_specialist_comments', blank=True)
 
     def __str__(self):
         return f"Specialist Comment by {self.user.full_name} on {self.specialist.name}"
@@ -82,7 +81,6 @@ class SpecialistReply(models.Model):
     )
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_specialist_replies", blank=True)
 
     def __str__(self):
         return f"Reply by {self.user.full_name} on specialist comment {self.comment.id}"
@@ -99,7 +97,6 @@ class TherapyCenterComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_center_comments', blank=True)
 
     def __str__(self):
         return f"Center Comment by {self.user.full_name} on {self.center.name}"
@@ -114,7 +111,6 @@ class TherapyCenterReply(models.Model):
     )
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_center_replies", blank=True)
 
     def __str__(self):
         return f"Reply by {self.user.full_name} on therapy center comment {self.comment.id}"
@@ -130,7 +126,6 @@ class NewsComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_news_comments', blank=True)
 
     def __str__(self):
         return f"News Comment by {self.user.full_name} on {self.news.title}"
@@ -145,7 +140,6 @@ class NewsReply(models.Model):
     )
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_news_replies", blank=True)
 
     def __str__(self):
         return f"Reply by {self.user.full_name} on news comment {self.comment.id}"

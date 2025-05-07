@@ -131,7 +131,7 @@ class SpecialistReplyDeleteView(generics.DestroyAPIView):
             raise PermissionDenied("You can delete only your own replies.")
 
         return super().delete(request, *args, **kwargs)
-
+    
 class TherapyCenterListView(generics.ListAPIView):
     queryset = TherapyCenter.objects.all().order_by('-created_at')
     serializer_class = TherapyCenterSerializer

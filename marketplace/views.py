@@ -70,6 +70,10 @@ class PublicEquipmentListView(generics.ListAPIView):
     queryset = EquipmentItem.objects.all().order_by('-created_at')
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.AllowAny]
+    
+    @swagger_auto_schema(operation_description="Returns a list of all equipment items.")
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 class PublicEquipmentDetailView(generics.RetrieveAPIView):
     queryset = EquipmentItem.objects.all()
@@ -77,20 +81,48 @@ class PublicEquipmentDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     lookup_field = 'id'
 
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific equipment item by its ID.",
+        responses={200: EquipmentItemSerializer}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
 class EquipmentCategoryListView(generics.ListAPIView):
     queryset = EquipmentCategory.objects.all().order_by('name')
     serializer_class = EquipmentCategorySerializer
     permission_classes = [permissions.AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Retrieve all available equipment categories.",
+        responses={200: EquipmentCategorySerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 class AvailabilityTypeListView(generics.ListAPIView):
     queryset = AvailabilityType.objects.all().order_by('name')
     serializer_class = AvailabilityTypeSerializer
     permission_classes = [permissions.AllowAny]
 
+    @swagger_auto_schema(
+        operation_description="Retrieve all available availability types.",
+        responses={200: AvailabilityTypeSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
 class ConditionTypeListView(generics.ListAPIView):
     queryset = ConditionType.objects.all().order_by('name')
     serializer_class = ConditionTypeSerializer
     permission_classes = [permissions.AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Retrieve all available condition types.",
+        responses={200: ConditionTypeSerializer(many=True)}
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 import logging
 logger = logging.getLogger(__name__)  
@@ -98,6 +130,22 @@ logger = logging.getLogger(__name__)
 class EquipmentPhotoUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+
+    @swagger_auto_schema(
+        operation_description="Upload photos for a specific equipment item.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'images': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_FILE)),
+                'item_id': openapi.Schema(type=openapi.TYPE_STRING, description="ID of the equipment item")
+            }
+        ),
+        responses={
+            201: openapi.Response(description="Photos uploaded successfully."),
+            400: openapi.Response(description="Invalid data provided."),
+            500: openapi.Response(description="Internal server error.")
+        }
+    )
 
     def post(self, request, *args, **kwargs):
         try:

@@ -13,18 +13,14 @@ class InfoTagSerializer(serializers.ModelSerializer):
 
 class SpecialistCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = SpecialistComment
         fields = [
             'id', 'user', 'content', 'rating',
-            'created_at', 'updated_at', 'likes_count', 'replies'
+            'created_at', 'updated_at', 'replies'
         ]
-    
-    def get_likes_count(self, obj):
-        return obj.likes.count()
 
     def get_replies(self, obj):
         return SpecialistReplySerializer(obj.replies.all(), many=True).data
@@ -36,15 +32,11 @@ class SpecialistCommentSerializer(serializers.ModelSerializer):
 
 class SpecialistReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     parent = serializers.PrimaryKeyRelatedField(queryset=SpecialistComment.objects.all(), required=False)  
 
     class Meta:
         model = SpecialistReply
-        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
+        fields = ['id', 'user', 'content', 'created_at', 'parent']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -53,19 +45,15 @@ class SpecialistReplySerializer(serializers.ModelSerializer):
     
 class TherapyCenterCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = TherapyCenterComment
         fields = [
             'id', 'user', 'content', 'rating',
-            'created_at', 'updated_at', 'likes_count', 'replies'
+            'created_at', 'updated_at', 'replies'
         ]
     
-    def get_likes_count(self, obj):
-        return obj.likes.count()
-
     def get_replies(self, obj):
         return TherapyCenterCommentSerializer(obj.replies.all(), many=True).data
 
@@ -76,15 +64,11 @@ class TherapyCenterCommentSerializer(serializers.ModelSerializer):
     
 class TherapyCenterReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     parent = serializers.PrimaryKeyRelatedField(queryset=TherapyCenterComment.objects.all(), required=False)  
 
     class Meta:
         model = TherapyCenterReply
-        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
+        fields = ['id', 'user', 'content', 'created_at', 'parent']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -93,19 +77,15 @@ class TherapyCenterReplySerializer(serializers.ModelSerializer):
 
 class NewsCommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     replies = serializers.SerializerMethodField()
 
     class Meta:
         model = NewsComment
         fields = [
             'id', 'user', 'content',
-            'created_at', 'updated_at', 'likes_count', 'replies'
+            'created_at', 'updated_at', 'replies'
         ]
     
-    def get_likes_count(self, obj):
-        return obj.likes.count()
-
     def get_replies(self, obj):
         return NewsCommentSerializer(obj.replies.all(), many=True).data
 
@@ -116,15 +96,11 @@ class NewsCommentSerializer(serializers.ModelSerializer):
 
 class NewsReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    likes_count = serializers.SerializerMethodField()
     parent = serializers.PrimaryKeyRelatedField(queryset=NewsComment.objects.all(), required=False)  
 
     class Meta:
         model = NewsReply
-        fields = ['id', 'user', 'content', 'created_at', 'likes_count', 'parent']
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
+        fields = ['id', 'user', 'content', 'created_at', 'parent']
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
@@ -149,7 +125,6 @@ class SpecialistSerializer(serializers.ModelSerializer):
 
     def get_average_rating(self, obj):
         return obj.average_rating()
-
 
 class TherapyCenterSerializer(serializers.ModelSerializer):
     tags = InfoTagSerializer(many=True, read_only=True)
