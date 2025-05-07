@@ -96,7 +96,7 @@ class SpecialistListReplyView(generics.ListAPIView):
     def get_queryset(self):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(SpecialistComment, id=comment_id)
-        return SpecialistReply.objects.filter(comment=comment).order_by('created_at')
+        return SpecialistReply.objects.filter(parent=comment).order_by('created_at')
 
 class SpecialistReplyCreateView(generics.CreateAPIView):
     serializer_class = SpecialistReplySerializer
@@ -201,7 +201,7 @@ class TherapyCenterListReplyView(generics.ListAPIView):
     def get_queryset(self):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(TherapyCenterComment, id=comment_id)
-        return TherapyCenterReply.objects.filter(comment=comment).order_by('created_at')
+        return TherapyCenterReply.objects.filter(parent=comment).order_by('created_at')
 
 class TherapyCenterReplyCreateView(generics.CreateAPIView):
     serializer_class = TherapyCenterReplySerializer
@@ -306,7 +306,7 @@ class NewsListReplyView(generics.ListAPIView):
     def get_queryset(self):
         comment_id = self.kwargs.get('comment_id')
         comment = get_object_or_404(NewsComment, id=comment_id)
-        return NewsReply.objects.filter(comment=comment).order_by('created_at')
+        return NewsReply.objects.filter(parent=comment).order_by('created_at')
 
 class NewsReplyCreateView(generics.CreateAPIView):
     serializer_class = NewsReplySerializer
