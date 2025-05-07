@@ -262,7 +262,7 @@ class NewsCommentCreateView(generics.CreateAPIView):
         return super().post(request, *args, **kwargs)
     
     def perform_create(self, serializer):
-        news_id = self.kwargs.get('specialist_id')
+        news_id = self.kwargs.get('news_id')
         news = get_object_or_404(News, id=news_id)
         
         # Create the comment or reply
@@ -293,7 +293,7 @@ class NewsListCommentView(generics.ListAPIView):
     def get_queryset(self):
         news_id = self.kwargs.get('news_id')
         news = get_object_or_404(News, id=news_id)
-        return SpecialistComment.objects.filter(news=news).order_by('created_at')
+        return NewsComment.objects.filter(news=news).order_by('created_at')
 
 class NewsListReplyView(generics.ListAPIView):
     serializer_class = NewsReplySerializer
