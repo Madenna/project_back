@@ -134,22 +134,6 @@ class EquipmentPhotoUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    @swagger_auto_schema(
-        operation_description="Upload photos for a specific equipment item.",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'images': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Items(type=openapi.TYPE_FILE)),
-                'item_id': openapi.Schema(type=openapi.TYPE_STRING, description="ID of the equipment item")
-            }
-        ),
-        responses={
-            201: openapi.Response(description="Photos uploaded successfully."),
-            400: openapi.Response(description="Invalid data provided."),
-            500: openapi.Response(description="Internal server error.")
-        }
-    )
-
     def post(self, request, *args, **kwargs):
         try:
             item_id = request.query_params.get('item_id')
