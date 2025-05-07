@@ -53,9 +53,16 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'photos']
 
     def create(self, validated_data):
-        availability_data = validated_data.pop('availability_ids', [])
-        item = EquipmentItem.objects.create(**validated_data)
-        item.available_for.set(availability_data)
+        category_id = validated_data.pop('category_id')
+        condition_id = validated_data.pop('condition_id')
+        availability_ids = validated_data.pop('availability_ids', [])
+
+        item = EquipmentItem.objects.create(
+            category_id=category_id,
+            condition_id=condition_id,
+            **validated_data
+        )
+        item.availability.set(availability_ids)
         return item
 
     def update(self, instance, validated_data):

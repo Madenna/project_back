@@ -31,7 +31,6 @@ class SpecialistDetailView(generics.RetrieveAPIView):
     queryset = Specialist.objects.all()
     serializer_class = SpecialistSerializer
     permission_classes = [permissions.AllowAny]
-    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_description="Retrieve a specialist by ID.",
@@ -148,7 +147,6 @@ class TherapyCenterDetailView(generics.RetrieveAPIView):
     queryset = TherapyCenter.objects.all()
     serializer_class = TherapyCenterSerializer
     permission_classes = [permissions.AllowAny]
-    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_description="Retrieve a therapy center by ID.",
@@ -265,7 +263,6 @@ class NewsDetailView(generics.RetrieveAPIView):
     queryset = News.objects.all()
     serializer_class = NewsSerializer
     permission_classes = [permissions.AllowAny]
-    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_description="Retrieve a news article by ID.",

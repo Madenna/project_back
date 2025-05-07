@@ -33,32 +33,32 @@ from .views import (
 urlpatterns = [
     # Specialist Views
     path('specialists/', SpecialistListView.as_view(), name='specialist_list'),
-    path('specialists/<uuid:id>/', SpecialistDetailView.as_view(), name='specialist_detail'),
-    path('specialists/<uuid:specialist_id>/comments/', SpecialistCommentCreateView.as_view(), name='create_specialist_comment'),
+    path('specialists/<uuid:pk>/', SpecialistDetailView.as_view(), name='specialist_detail'),
+    path('specialists/<uuid:specialist_pk>/comments/', SpecialistCommentCreateView.as_view(), name='create_specialist_comment'),
     path('specialists/comments/<uuid:pk>/delete/', SpecialistCommentDeleteView.as_view(), name='delete_specialist_comment'),
-    path('specialists/<uuid:specialist_id>/comments/', SpecialistListCommentView.as_view(), name='list_specialist_comments'),
-    path('specialists/comments/<uuid:comment_id>/replies/', SpecialistListReplyView.as_view(), name='list_specialist_replies'),
-    path('specialists/comments/<uuid:comment_id>/replies/create/', SpecialistReplyCreateView.as_view(), name='create_specialist_reply'),
+    path('specialists/<uuid:specialist_pk>/comments/', SpecialistListCommentView.as_view(), name='list_specialist_comments'),
+    path('specialists/comments/<uuid:comment_pk>/replies/', SpecialistListReplyView.as_view(), name='list_specialist_replies'),
+    path('specialists/comments/<uuid:comment_pk>/replies/create/', SpecialistReplyCreateView.as_view(), name='create_specialist_reply'),
     path('specialists/comments/replies/<uuid:pk>/delete/', SpecialistReplyDeleteView.as_view(), name='delete_specialist_reply'),
 
     # Therapy Center Views
     path('therapy-centers/', TherapyCenterListView.as_view(), name='therapy_center_list'),
-    path('therapy-centers/<uuid:id>/', TherapyCenterDetailView.as_view(), name='therapy_center_detail'),
-    path('therapy-centers/<uuid:center_id>/comments/', TherapyCenterCommentCreateView.as_view(), name='create_therapy_center_comment'),
+    path('therapy-centers/<uuid:pk>/', TherapyCenterDetailView.as_view(), name='therapy_center_detail'),
+    path('therapy-centers/<uuid:center_pk>/comments/', TherapyCenterCommentCreateView.as_view(), name='create_therapy_center_comment'),
     path('therapy-centers/comments/<uuid:pk>/delete/', TherapyCenterCommentDeleteView.as_view(), name='delete_therapy_center_comment'),
-    path('therapy-centers/<uuid:center_id>/comments/', TherapyCenterListCommentView.as_view(), name='list_therapy_center_comments'),
-    path('therapy-centers/comments/<uuid:comment_id>/replies/', TherapyCenterListReplyView.as_view(), name='list_therapy_center_replies'),
-    path('therapy-centers/comments/<uuid:comment_id>/replies/create/', TherapyCenterReplyCreateView.as_view(), name='create_therapy_center_reply'),
+    path('therapy-centers/<uuid:center_pk>/comments/', TherapyCenterListCommentView.as_view(), name='list_therapy_center_comments'),
+    path('therapy-centers/comments/<uuid:comment_pk>/replies/', TherapyCenterListReplyView.as_view(), name='list_therapy_center_replies'),
+    path('therapy-centers/comments/<uuid:comment_pk>/replies/create/', TherapyCenterReplyCreateView.as_view(), name='create_therapy_center_reply'),
     path('therapy-centers/comments/replies/<uuid:pk>/delete/', TherapyCenterReplyDeleteView.as_view(), name='delete_therapy_center_reply'),
 
     # News Views
     path('news/', NewsListView.as_view(), name='news_list'),
-    path('news/<uuid:id>/', NewsDetailView.as_view(), name='news_detail'),
-    path('news/<uuid:news_id>/comments/', NewsCommentCreateView.as_view(), name='create_news_comment'),
+    path('news/<uuid:pk>/', NewsDetailView.as_view(), name='news_detail'),
+    path('news/<uuid:news_pk>/comments/', NewsCommentCreateView.as_view(), name='create_news_comment'),
     path('news/comments/<uuid:pk>/delete/', NewsCommentDeleteView.as_view(), name='delete_news_comment'),
-    path('news/<uuid:news_id>/comments/', NewsListCommentView.as_view(), name='list_news_comments'),
-    path('news/comments/<uuid:comment_id>/replies/', NewsListReplyView.as_view(), name='list_news_replies'),
-    path('news/comments/<uuid:comment_id>/replies/create/', NewsReplyCreateView.as_view(), name='create_news_reply'),
+    path('news/<uuid:news_pk>/comments/', NewsListCommentView.as_view(), name='list_news_comments'),
+    path('news/comments/<uuid:comment_pk>/replies/', NewsListReplyView.as_view(), name='list_news_replies'),
+    path('news/comments/<uuid:comment_pk>/replies/create/', NewsReplyCreateView.as_view(), name='create_news_reply'),
     path('news/comments/replies/<uuid:pk>/delete/', NewsReplyDeleteView.as_view(), name='delete_news_reply'),
 ]
 
