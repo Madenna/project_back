@@ -17,10 +17,13 @@ class EquipmentItemListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         print(f"Fetching items for user: {self.request.user}")
-        return EquipmentItem.objects.filter(owner=self.request.user).order_by('-created_at')
+        return EquipmentItem.objects.filter(owner=self.request.user).prefetch_related('available_for').order_by('-created_at')
 
     def perform_create(self, serializer):
         item = serializer.save(owner=self.request.user)
+
+        availability_data = serializer.validated_data.get('availability_ids', [])
+        item.available_for.set(availability_data)
 
         for file_key in self.request.FILES:
             uploaded_file = self.request.FILES[file_key]
@@ -67,7 +70,7 @@ class EquipmentItemDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
 
 class PublicEquipmentListView(generics.ListAPIView):
-    queryset = EquipmentItem.objects.all().order_by('-created_at')
+    queryset = EquipmentItem.objects.all().prefetch_related('available_for').order_by('-created_at') 
     serializer_class = EquipmentItemSerializer
     permission_classes = [permissions.AllowAny]
     
