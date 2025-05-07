@@ -28,11 +28,11 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=EquipmentCategory.objects.all(), source='category', write_only=True
     )
-    availability = AvailabilityTypeSerializer(many=True, read_only=True)
+    availability = AvailabilityTypeSerializer(source='available_for', many=True, read_only=True)
     availability_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=AvailabilityType.objects.all(),
-        #source='availability',
+        source='available_for',
         write_only=True
     )
     condition = ConditionTypeSerializer(read_only=True)
@@ -62,7 +62,7 @@ class EquipmentItemSerializer(serializers.ModelSerializer):
             condition_id=condition_id,
             **validated_data
         )
-        item.availability.set(availability_ids)
+        item.available_for.set(availability_ids)
         return item
 
     def update(self, instance, validated_data):
