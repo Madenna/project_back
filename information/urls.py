@@ -34,7 +34,7 @@ urlpatterns = [
     # Specialist Views
     path('specialists/', SpecialistListView.as_view(), name='specialist_list'),
     path('specialists/<uuid:pk>/', SpecialistDetailView.as_view(), name='specialist_detail'),
-    path('specialists/<uuid:specialist_id>/comments/', SpecialistCommentCreateView.as_view(), name='create_specialist_comment'),
+    path('specialists/<uuid:specialist_id>/comments/create/', SpecialistCommentCreateView.as_view(), name='create_specialist_comment'),
     path('specialists/comments/<uuid:pk>/delete/', SpecialistCommentDeleteView.as_view(), name='delete_specialist_comment'),
     path('specialists/<uuid:specialist_id>/comments/', SpecialistListCommentView.as_view(), name='list_specialist_comments'),
     path('specialists/comments/<uuid:comment_id>/replies/', SpecialistListReplyView.as_view(), name='list_specialist_replies'),
@@ -44,7 +44,7 @@ urlpatterns = [
     # Therapy Center Views
     path('therapy-centers/', TherapyCenterListView.as_view(), name='therapy_center_list'),
     path('therapy-centers/<uuid:pk>/', TherapyCenterDetailView.as_view(), name='therapy_center_detail'),
-    path('therapy-centers/<uuid:center_id>/comments/', TherapyCenterCommentCreateView.as_view(), name='create_therapy_center_comment'),
+    path('therapy-centers/<uuid:center_id>/comments/create/', TherapyCenterCommentCreateView.as_view(), name='create_therapy_center_comment'),
     path('therapy-centers/comments/<uuid:pk>/delete/', TherapyCenterCommentDeleteView.as_view(), name='delete_therapy_center_comment'),
     path('therapy-centers/<uuid:center_id>/comments/', TherapyCenterListCommentView.as_view(), name='list_therapy_center_comments'),
     path('therapy-centers/comments/<uuid:comment_id>/replies/', TherapyCenterListReplyView.as_view(), name='list_therapy_center_replies'),
