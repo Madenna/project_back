@@ -54,7 +54,7 @@ urlpatterns = [
     # News Views
     path('news/', NewsListView.as_view(), name='news_list'),
     path('news/<uuid:pk>/', NewsDetailView.as_view(), name='news_detail'),
-    path('news/<uuid:news_id>/comments/', NewsCommentCreateView.as_view(), name='create_news_comment'),
+    path('news/<uuid:news_id>/comments/create/', NewsCommentCreateView.as_view(), name='create_news_comment'),
     path('news/comments/<uuid:pk>/delete/', NewsCommentDeleteView.as_view(), name='delete_news_comment'),
     path('news/<uuid:news_id>/comments/', NewsListCommentView.as_view(), name='list_news_comments'),
     path('news/comments/<uuid:comment_id>/replies/', NewsListReplyView.as_view(), name='list_news_replies'),
