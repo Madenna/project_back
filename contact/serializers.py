@@ -4,4 +4,4 @@ from .models import ContactMessage
 class ContactMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactMessage
-        fields = ['id', 'contact_method', 'contact_detail', 'message', 'created_at']
+        fields = ['id', 'method', 'contact_value', 'message', 'submitted_at']
