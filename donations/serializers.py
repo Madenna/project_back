@@ -1,4 +1,3 @@
-# donations/serializers.py
 from rest_framework import serializers
 from .models import DonationRequest, DonationConfirmation, DonationPhoto
 
@@ -9,7 +8,6 @@ class DonationPhotoSerializer(serializers.ModelSerializer):
 
 class DonationRequestSerializer(serializers.ModelSerializer):
     remaining = serializers.SerializerMethodField()
-    child_info = serializers.SerializerMethodField()
     photos = DonationPhotoSerializer(many=True, required=False)
 
     class Meta:

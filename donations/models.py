@@ -22,7 +22,6 @@ def generate_unique_kaspi_code():
 class DonationRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='donation_requests')
     child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='donations')
-    photo = CloudinaryField('child_photo')
     purpose = models.TextField()
     goal_amount = models.DecimalField(max_digits=10, decimal_places=2)
     donated_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
