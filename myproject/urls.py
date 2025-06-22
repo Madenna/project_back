@@ -32,6 +32,7 @@ urlpatterns = [
     path("marketplace/", include("marketplace.urls")),
     path('komekai/', include('komekai.urls')),
     path('contact_us/', include('contact.urls')),
+    path('donations/', include('donations.urls')),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 if settings.DEBUG:
