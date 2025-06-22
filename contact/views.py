@@ -51,12 +51,21 @@ class ContactMessageHistoryView(generics.ListAPIView):
     serializer_class = ContactMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @swagger_auto_schema(
-        operation_description="Get current user's contact message history (requires authentication)",
-        responses={200: ContactMessageSerializer(many=True)}
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-    
     def get_queryset(self):
         return ContactMessage.objects.filter(user=self.request.user).order_by('-created_at')
+
+    @swagger_auto_schema(
+        operation_description="Get the list of contact messages sent by the authenticated user.",
+        responses={
+            200: openapi.Response(
+                description="List of contact messages",
+                schema=ContactMessageSerializer(many=True)
+            ),
+            401: openapi.Response(description="Unauthorized - user must be logged in"),
+            403: openapi.Response(description="Forbidden - access denied"),
+            500: openapi.Response(description="Server error")
+        }
+    )
+    def list(self, request, *args, **kwargs): 
+        return super().list(request, *args, **kwargs)
+    
