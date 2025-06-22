@@ -70,3 +70,10 @@ class DonationConfirmation(models.Model):
 
     def __str__(self):
         return f"Donation {self.amount}₸ to {self.donation_request.id}"
+    
+class DonationPhoto(models.Model):
+    donation_request = models.ForeignKey(DonationRequest, on_delete=models.CASCADE, related_name='photos')
+    image = CloudinaryField('donation_photo')
+
+    def __str__(self):
+        return f"Photo for request {self.donation_request.id}"
