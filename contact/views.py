@@ -49,8 +49,8 @@ class ContactMessageCreateView(APIView):
     
 class ContactMessageHistoryView(generics.ListAPIView):
     serializer_class = ContactMessageSerializer
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    
     def get_queryset(self):
         return ContactMessage.objects.filter(user=self.request.user).order_by('-created_at')
 
