@@ -9,6 +9,14 @@ from drf_yasg import openapi
 from rest_framework.exceptions import PermissionDenied
 import requests
 from userauth.models import Child
+from rest_framework.permissions import IsAuthenticated
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
+from datetime import datetime, timedelta
+from django.http import HttpResponse
+from reportlab.lib import colors
 
 class SymptomEntryListCreateView(generics.ListCreateAPIView):
     serializer_class = SymptomEntrySerializer
@@ -73,7 +81,7 @@ class SymptomEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class SymptomAIAnalyzeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    
+
     @swagger_auto_schema(
         operation_description="Analyze symptoms for selected child using AI assistant Komekai",
         request_body=openapi.Schema(
@@ -129,7 +137,7 @@ class SymptomAIAnalyzeView(APIView):
         session_id = session_resp.json().get("id")
 
         message_resp = requests.post(
-            f"http://localhost:8000/api/komekai/sessions/{session_id}/message/",
+            f"https://project-back-81mh.onrender.com/komekai/sessions/{session_id}/message/",
             json={"message": prompt},
             headers={"Authorization": f"Bearer {request.auth}"},
         )
@@ -139,3 +147,101 @@ class SymptomAIAnalyzeView(APIView):
 
         ai_reply = message_resp.json().get("reply")
         return Response({"advice": ai_reply}, status=200)
+    
+def draw_footer(canvas, width):
+    canvas.setFont("Helvetica", 9)
+    canvas.setFillColor(colors.grey)
+    canvas.drawRightString(width - 2 * cm, 1.5 * cm, "balasteps.com")
+    canvas.setFillColor(colors.black) 
+
+class ExportSymptomsPDFView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Export symptoms of a selected child to PDF based on a time period.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["child_id", "period"],
+            properties={
+                "child_id": openapi.Schema(type=openapi.TYPE_INTEGER, description="ID of the child"),
+                "period": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    enum=["3_months", "6_months", "1_year", "custom"],
+                    description="Time period for export"
+                ),
+                "custom_start": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    format="date",
+                    description="Start date (required if period is 'custom')"
+                ),
+                "custom_end": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    format="date",
+                    description="End date (required if period is 'custom')"
+                ),
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Returns PDF file with symptoms"),
+            400: openapi.Response(description="Invalid period or input"),
+            401: openapi.Response(description="Unauthorized")
+        }
+    )
+    def post(self, request):
+        child_id = request.data.get('child_id')
+        period = request.data.get('period')  
+        custom_start = request.data.get('custom_start') 
+        custom_end = request.data.get('custom_end')     
+
+        child = get_object_or_404(Child, id=child_id, parent=request.user)
+
+        end_date = datetime.today().date()
+
+        if period == '3_months':
+            start_date = end_date - timedelta(days=90)
+        elif period == '6_months':
+            start_date = end_date - timedelta(days=180)
+        elif period == '1_year':
+            start_date = end_date - timedelta(days=365)
+        elif period == 'custom' and custom_start and custom_end:
+            start_date = datetime.strptime(custom_start, '%Y-%m-%d').date()
+            end_date = datetime.strptime(custom_end, '%Y-%m-%d').date()
+        else:
+            return HttpResponse("Invalid period", status=400)
+
+        symptoms = SymptomEntry.objects.filter(
+            child=child,
+            date__range=(start_date, end_date)
+        ).order_by('date')
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+
+        y = height - 2 * cm
+
+        p.setFont("Helvetica-Bold", 14)
+        p.drawString(2 * cm, y, f"Symptom Report for {child.name} {child.surname}")
+        y -= 1 * cm
+        p.setFont("Helvetica", 12)
+        p.drawString(2 * cm, y, f"Date of birth: {child.birth_date.strftime('%Y-%m-%d')}")
+        y -= 1 * cm
+
+        p.setFont("Helvetica", 11)
+        for symptom in symptoms:
+            text = f"{symptom.date} — {symptom.symptom_name} — {symptom.action_taken or 'No action'}"
+            if y < 2 * cm:  
+                p.showPage()
+                y = height - 2 * cm
+                p.setFont("Helvetica", 11)
+            p.drawString(2 * cm, y, text)
+            y -= 0.7 * cm
+
+        draw_footer(p, width)
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        filename = f"{child.name}_{child.surname}_symptoms.pdf"
+        return HttpResponse(buffer, content_type='application/pdf', headers={'Content-Disposition': f'attachment; filename="{filename}"'})
+    
