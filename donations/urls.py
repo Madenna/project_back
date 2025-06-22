@@ -7,7 +7,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('donations/', DonationRequestListCreateView.as_view(), name='donation_list_create'),
-    path('donations/<int:pk>/', DonationRequestDetailView.as_view(), name='donation_detail'),
-    path('donations/confirm/', DonationConfirmationCreateView.as_view(), name='donation_confirm'),
+    path('donation/', DonationRequestListCreateView.as_view(), name='donation_list_create'),
+    path('donation/<int:pk>/', DonationRequestDetailView.as_view(), name='donation_detail'),
+    path('donation/confirm/', DonationConfirmationCreateView.as_view(), name='donation_confirm'),
 ]
