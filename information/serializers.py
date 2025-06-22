@@ -40,6 +40,9 @@ class SpecialistCommentSerializer(serializers.ModelSerializer):
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
     
+    def get_replies(self, obj):
+        return SpecialistReplySerializer(obj.replies.all(), many=True).data
+    
 class TherapyCenterReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     parent = serializers.PrimaryKeyRelatedField(queryset=TherapyCenterComment.objects.all(), required=False)  
@@ -69,6 +72,9 @@ class TherapyCenterCommentSerializer(serializers.ModelSerializer):
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
     
+    def get_replies(self, obj):
+        return TherapyCenterReplySerializer(obj.replies.all(), many=True).data
+    
 class NewsReplySerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     parent = serializers.PrimaryKeyRelatedField(queryset=NewsComment.objects.all(), required=False)  
@@ -97,6 +103,9 @@ class NewsCommentSerializer(serializers.ModelSerializer):
         rep = super().to_representation(instance)
         rep['created_at'] = localtime(instance.created_at).strftime("%Y-%m-%d %H:%M:%S")
         return rep
+    
+    def get_replies(self, obj):
+        return NewsReplySerializer(obj.replies.all(), many=True).data
 
 class SpecialistSerializer(serializers.ModelSerializer):
     tags = InfoTagSerializer(many=True, read_only=True)
