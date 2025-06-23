@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from cloudinary.uploader import upload
 from cloudinary.models import CloudinaryField
 import qrcode
+from decimal import Decimal
 
 User = get_user_model()
 from userauth.models import Child
@@ -47,7 +48,7 @@ class DonationRequest(models.Model):
         super().save(*args, **kwargs)
 
     def remaining_amount(self):
-        return max(self.goal_amount - self.donated_amount, 0)
+        return max(self.goal_amount - self.donated_amount, Decimal('0'))
 
     def is_expired(self):
         return date.today() > self.deadline
