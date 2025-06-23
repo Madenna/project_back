@@ -54,7 +54,7 @@ class DonationRequest(models.Model):
         return date.today() > self.deadline
 
     def __str__(self):
-        return f"{self.child.name} — {self.purpose}"
+        return f"{self.child.full_name} — {self.purpose}"
 
 class DonationConfirmation(models.Model):
     donor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
