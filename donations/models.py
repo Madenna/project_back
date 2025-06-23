@@ -25,7 +25,7 @@ class DonationRequest(models.Model):
     child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='donations')
     purpose = models.TextField()
     goal_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    donated_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    donated_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     kaspi_code = models.CharField(max_length=6, unique=True, blank=True)
     kaspi_qr = CloudinaryField('kaspi_qr', blank=True, null=True)
     deadline = models.DateField()
@@ -65,10 +65,12 @@ class DonationConfirmation(models.Model):
 
     def save(self, *args, **kwargs):
         if not isinstance(self.amount, Decimal):
-            self.amount = Decimal(str(self.amount)) 
+            self.amount = Decimal(str(self.amount))
 
-        self.donation_request.donated_amount += self.amount
-        self.donation_request.save()
+        donation = self.donation_request
+        donation.donated_amount = Decimal(str(donation.donated_amount)) + self.amount
+        donation.save()
+    
         super().save(*args, **kwargs)
 
     def __str__(self):
