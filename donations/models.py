@@ -34,6 +34,9 @@ class DonationRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        if not isinstance(self.amount, Decimal):
+            self.amount = Decimal(str(self.amount))
+
         if not self.kaspi_code:
             self.kaspi_code = generate_unique_kaspi_code()
 
@@ -44,7 +47,9 @@ class DonationRequest(models.Model):
             buffer.seek(0)
             result = upload(buffer, folder="kaspi_qr", public_id=f"kaspi_{self.kaspi_code}")
             self.kaspi_qr = result["public_id"]
-
+            
+        self.donation_request.donated_amount += self.amount
+        self.donation_request.save()
         super().save(*args, **kwargs)
 
     def remaining_amount(self):
