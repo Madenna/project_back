@@ -128,18 +128,20 @@ class SymptomAIAnalyzeView(APIView):
         )
 
         session_resp = requests.post(
-            "https://project-back-81mh.onrender.com/komekai/sessions/",
+            "https://balasteps.onrender.com/komekai/sessions/",
             headers={"Authorization": f"Bearer {request.auth}"},
+            timeout=10
         )
         if session_resp.status_code not in [200, 201]:
-            return Response({'error': 'Failed to create Komekai session'}, status=500)
+            return Response({'error': 'Failed to create Komekai session', 'details': session_resp.text}, status=500)
         
         session_id = session_resp.json().get("id")
 
         message_resp = requests.post(
-            f"https://project-back-81mh.onrender.com/komekai/sessions/{session_id}/message/",
+            f"https://balasteps.onrender.com/komekai/sessions/{session_id}/message/",
             json={"message": prompt},
             headers={"Authorization": f"Bearer {request.auth}"},
+            timeout=20
         )
 
         if message_resp.status_code != 200:
