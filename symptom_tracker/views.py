@@ -121,7 +121,7 @@ class SymptomAIAnalyzeView(APIView):
             summary_lines.append(f"- {s.date}: {s.symptom_name}, action: {s.action_taken or 'none'}")
 
         prompt = (
-            f"I am tracking symptoms for my child {child.name}. "
+            f"I am tracking symptoms for my child {child.full_name}. "
             f"Here are the symptoms recorded from {date_from} to {date_to}:\n\n"
             + "\n".join(summary_lines) +
             "\n\nCan you analyze this and give advice or suggestion?"
@@ -242,6 +242,6 @@ class ExportSymptomsPDFView(APIView):
         p.save()
 
         buffer.seek(0)
-        filename = f"{child.name}_{child.surname}_symptoms.pdf"
+        filename = f"{child.full_name}_symptoms.pdf"
         return HttpResponse(buffer, content_type='application/pdf', headers={'Content-Disposition': f'attachment; filename="{filename}"'})
     
