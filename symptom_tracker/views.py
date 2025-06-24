@@ -135,7 +135,17 @@ class SymptomAIAnalyzeView(APIView):
         if session_resp.status_code not in [200, 201]:
             return Response({'error': 'Failed to create Komekai session', 'details': session_resp.text}, status=500)
         
-        session_id = session_resp.json().get("id")
+        try:
+            session_data = session_resp.json()
+        except Exception as e:
+            return Response({
+                "error": "Invalid response from Komekai",
+                "status_code": session_resp.status_code,
+                "text": session_resp.text,
+                "reason": str(e)
+            }, status=500)
+
+        session_id = session_data.get("id")
 
         message_resp = requests.post(
             f"https://balasteps.onrender.com/komekai/sessions/{session_id}/message/",
@@ -223,10 +233,10 @@ class ExportSymptomsPDFView(APIView):
         y = height - 2 * cm
 
         p.setFont("Helvetica-Bold", 14)
-        p.drawString(2 * cm, y, f"Symptom Report for {child.name} {child.surname}")
+        p.drawString(2 * cm, y, f"Symptom Report for {child.full_name}")
         y -= 1 * cm
         p.setFont("Helvetica", 12)
-        p.drawString(2 * cm, y, f"Date of birth: {child.birth_date.strftime('%Y-%m-%d')}")
+        p.drawString(2 * cm, y, f"Date of birth: {child.birthday.strftime('%Y-%m-%d')}")
         y -= 1 * cm
 
         p.setFont("Helvetica", 11)
