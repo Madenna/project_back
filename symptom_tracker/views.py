@@ -78,7 +78,8 @@ class SymptomEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
-
+    
+from reportlab.lib.utils import simpleSplit
 class SymptomAIAnalyzeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -246,8 +247,17 @@ class ExportSymptomsPDFView(APIView):
                 p.showPage()
                 y = height - 2 * cm
                 p.setFont("Helvetica", 11)
-            p.drawString(2 * cm, y, text)
-            y -= 0.7 * cm
+            max_width = width - 4 * cm  
+            wrapped_lines = simpleSplit(text, "Helvetica", 11, max_width)
+
+            for line in wrapped_lines:
+                if y < 2 * cm:
+                    draw_footer(p, width)
+                    p.showPage()
+                    y = height - 2 * cm
+                    p.setFont("Helvetica", 11)
+                p.drawString(2 * cm, y, line)
+                y -= 0.6 * cm
 
         draw_footer(p, width)
         p.showPage()
