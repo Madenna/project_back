@@ -80,8 +80,9 @@ class SymptomEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().delete(request, *args, **kwargs)
     
 from reportlab.lib.utils import simpleSplit
+from komekai.utils import analyze_prompt
 class SymptomAIAnalyzeView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description="Analyze symptoms for selected child using AI assistant Komekai",
@@ -108,7 +109,10 @@ class SymptomAIAnalyzeView(APIView):
         if not all([child_id, date_from, date_to]):
             return Response({'error': 'child_id, date_from, and date_to are required.'}, status=400)
 
+        # Validate child ownership
         child = get_object_or_404(Child, id=child_id, parent=request.user)
+
+        # Fetch symptoms in date range
         symptoms = SymptomEntry.objects.filter(
             child=child,
             date__range=[date_from, date_to]
@@ -117,9 +121,11 @@ class SymptomAIAnalyzeView(APIView):
         if not symptoms.exists():
             return Response({'message': 'No symptoms found in this period.'}, status=200)
 
-        summary_lines = []
-        for s in symptoms:
-            summary_lines.append(f"- {s.date}: {s.symptom_name}, action: {s.action_taken or 'none'}")
+        # Build prompt from symptoms
+        summary_lines = [
+            f"- {s.date.strftime('%Y-%m-%d')}: {s.symptom_name}, action: {s.action_taken or 'none'}"
+            for s in symptoms
+        ]
 
         prompt = (
             f"I am tracking symptoms for my child {child.full_name}. "
@@ -128,37 +134,11 @@ class SymptomAIAnalyzeView(APIView):
             "\n\nCan you analyze this and give advice or suggestion?"
         )
 
-        session_resp = requests.post(
-            "https://balasteps.onrender.com/komekai/sessions/",
-            headers={"Authorization": f"Bearer {request.auth}"},
-            timeout=10
-        )
-        if session_resp.status_code not in [200, 201]:
-            return Response({'error': 'Failed to create Komekai session', 'details': session_resp.text}, status=500)
-        
         try:
-            session_data = session_resp.json()
+            ai_reply = analyze_prompt(prompt)
         except Exception as e:
-            return Response({
-                "error": "Invalid response from Komekai",
-                "status_code": session_resp.status_code,
-                "text": session_resp.text,
-                "reason": str(e)
-            }, status=500)
+            return Response({'error': 'AI request failed', 'details': str(e)}, status=500)
 
-        session_id = session_data.get("id")
-
-        message_resp = requests.post(
-            f"https://balasteps.onrender.com/komekai/sessions/{session_id}/message/",
-            json={"message": prompt},
-            headers={"Authorization": f"Bearer {request.auth}"},
-            timeout=20
-        )
-
-        if message_resp.status_code != 200:
-            return Response({'error': 'AI response failed'}, status=500)
-
-        ai_reply = message_resp.json().get("reply")
         return Response({"advice": ai_reply}, status=200)
     
 def draw_footer(canvas, width):
